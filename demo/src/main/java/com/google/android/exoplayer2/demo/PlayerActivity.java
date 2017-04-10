@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -117,6 +118,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private boolean shouldAutoPlay;
   private int resumeWindow;
   private long resumePosition;
+  private Context mContext;
 
   // Activity lifecycle
 
@@ -142,6 +144,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
     simpleExoPlayerView.setControllerVisibilityListener(this);
     simpleExoPlayerView.requestFocus();
+
+    mContext = this;
   }
 
   @Override
@@ -338,7 +342,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return new DashMediaSource(uri, buildDataSourceFactory(false),
             new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_HLS:
-        return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
+        return new HlsMediaSource(uri, createDataSource(uri), mainHandler, eventLogger);
       case C.TYPE_OTHER:
         return new ExtractorMediaSource(uri, mediaDataSourceFactory, new DefaultExtractorsFactory(),
             mainHandler, eventLogger);
@@ -346,6 +350,19 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         throw new IllegalStateException("Unsupported type: " + type);
       }
     }
+  }
+
+  private DataSource.Factory createDataSource(Uri uri){
+    if (TextUtils.isEmpty(uri.getScheme()) || uri.getScheme().equals("file")) {
+      return buildLocalDataSourceFactory(true,uri);
+    } else {
+      return mediaDataSourceFactory;
+    }
+
+  }
+  private DataSource.Factory buildLocalDataSourceFactory(boolean useBandwidthMeter, Uri uri) {
+    return new DownloadedHlsDataSourceFactory(mContext, null,
+            buildHttpDataSourceFactory(useBandwidthMeter), uri);
   }
 
   private DrmSessionManager<FrameworkMediaCrypto> buildDrmSessionManager(UUID uuid,
