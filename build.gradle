@@ -34,7 +34,7 @@ allprojects {
         buildToolsVersion='23.0.3'
         releaseRepoName = 'exoplayer'
         releaseUserOrg = 'google'
-        releaseGroupId = 'com.google.android.exoplayer'
+        releaseGroupId = 'com.yuta1723.android.exoplayer'
         releaseVersion = 'r2.2.0'
         releaseWebsite = 'https://github.com/google/ExoPlayer'
     }
