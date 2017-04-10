@@ -14,7 +14,11 @@ import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 
@@ -33,6 +37,11 @@ public class DownloadedHlsDataSource implements DataSource {
     private final DataSource contentDataSource;
     private final Uri uri;
     private DataSource dataSource;
+
+    private static final int MAX_BYTEBUFFER_LENGTH = 1024;
+    private InputStream is = null;
+    //inputStream がデータの鍵の有無の判定基準になってもいいのか?
+    //byteやflagとかもっといいのがないのか? > flagの方が簡単?
 
     private String TAG = DownloadedHlsDataSource.class.getSimpleName();
 
@@ -70,6 +79,7 @@ public class DownloadedHlsDataSource implements DataSource {
         this(context, listener,
                 new DefaultHttpDataSource(userAgent, null, listener, connectTimeoutMillis,
                         readTimeoutMillis, allowCrossProtocolRedirects), uri);
+        Log.d(TAG,"enter DownloadedHlsDataSource");
     }
 
     /**
@@ -92,8 +102,7 @@ public class DownloadedHlsDataSource implements DataSource {
 
     @Override
     public long open(DataSpec dataSpec) throws IOException {
-        Log.d(TAG,"dataSpec uri is " + dataSpec.uri);
-//        dataSpecが鍵かどうかを判定する。
+//        dataSpecが鍵かtsかm3u8か判定する。
         if(!dataSpec.uri.getLastPathSegment().endsWith(".ts") && !dataSpec.uri.getLastPathSegment().endsWith(".m3u8")) {
             String origin = dataSpec.uri.toString();
             String saveDir = this.uri.toString().substring(0, this.uri.getPath().lastIndexOf("/")) + "/";
@@ -106,15 +115,19 @@ public class DownloadedHlsDataSource implements DataSource {
             dataSpec = new DataSpec(Uri.parse(saveDir + fileName), dataSpec.postBody, dataSpec.absoluteStreamPosition, dataSpec.position, dataSpec.length,
                     dataSpec.key, dataSpec.flags);
 
-//            String origin = dataSpec.uri.toString();
-//            String dir = origin.substring(0, this.uri.getPath().lastIndexOf("/"));
-//            String fileName = origin.substring(origin.lastIndexOf("/"));
-//            dataSpec = new DataSpec(Uri.parse(dir + fileName), dataSpec.postBody, dataSpec.absoluteStreamPosition, dataSpec.position, dataSpec.length,
-//                    dataSpec.key, dataSpec.flags);
+            File EncryptedKeyFile = new File(new File(saveDir), fileName);
+            if (!EncryptedKeyFile.exists()) {
+                Log.d(TAG,"key file is not available" );
+                return 0;
+            }
+            is = new ByteArrayInputStream(loadEncryptedKey(EncryptedKeyFile));
+            Log.d(TAG,"key is " + is.toString());
+            dataSpec = new DataSpec(Uri.parse(saveDir + fileName), loadEncryptedKey(EncryptedKeyFile), dataSpec.absoluteStreamPosition, dataSpec.position, dataSpec.length,
+                    dataSpec.key, dataSpec.flags);
+            return is.available();
 
 
         } else if (dataSpec.uri.getPath().lastIndexOf("/") != this.uri.getPath().lastIndexOf("/")) {
-
             //todo tsファイルの場合
 
             // 相対パスを修正
@@ -125,6 +138,7 @@ public class DownloadedHlsDataSource implements DataSource {
             dataSpec = new DataSpec(Uri.parse(saveDir + fileName), dataSpec.postBody, dataSpec.absoluteStreamPosition, dataSpec.position, dataSpec.length,
                     dataSpec.key, dataSpec.flags);
         }
+        is = null;
         Assertions.checkState(dataSource == null);
         // Choose the correct source for the scheme.
         String scheme = dataSpec.uri.getScheme();
@@ -147,7 +161,7 @@ public class DownloadedHlsDataSource implements DataSource {
 
     @Override
     public int read(byte[] buffer, int offset, int readLength) throws IOException {
-        return dataSource.read(buffer, offset, readLength);
+        return is != null ? is.read(buffer, offset, readLength) : dataSource.read(buffer, offset, readLength);
     }
 
     @Override
@@ -173,11 +187,43 @@ public class DownloadedHlsDataSource implements DataSource {
             byte[] md5_bytes = md.digest(str_bytes);
             BigInteger big_int = new BigInteger(1, md5_bytes);
             hashedName = big_int.toString(16);
-            Log.d(TAG,"name : " + name +  "HashedName : " + hashedName);
+            Log.d(TAG,"name : " + name +  " HashedName : " + hashedName);
             return hashedName;
         }catch(Exception e){
             return "";
             // 略
         }
+    }
+
+    private byte[] loadEncryptedKey(File file) {
+        Log.d(TAG, "loadEncryptedKey");
+        final int size = (int) file.length();
+        if (size == 0 || size > MAX_BYTEBUFFER_LENGTH) {
+            Log.d(TAG, "loadEncryptedKey: File size is incorrect: " + size);
+            return null;
+        }
+        FileInputStream fis = null;
+        byte[] data = new byte[size];
+        try {
+            fis = new FileInputStream(file);
+            if (size != fis.read(data, 0, size)) {
+                Log.d(TAG, "loadEncryptedKey: Could not load data");
+                return null;
+            } else {
+                Log.d(TAG, "loadEncryptedKey: Load keySetId successfully");
+                return data;
+            }
+        } catch (IOException e) {
+            Log.d(TAG, "loadEncryptedKey: Unable to load keySetId", e);
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                }
+                fis = null;
+            }
+        }
+        return null;
     }
 }
