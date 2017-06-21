@@ -75,6 +75,10 @@
       </intent-filter>
     </activity>
 
+    <service
+        android:name="com.google.android.exoplayer2.demo.PlayerService"
+        android:exported="false" />
+
   </application>
 
 </manifest>

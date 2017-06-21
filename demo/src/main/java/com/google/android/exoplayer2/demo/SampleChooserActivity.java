@@ -103,7 +103,8 @@ public class SampleChooserActivity extends Activity {
   }
 
   private void onSampleSelected(Sample sample) {
-    startActivity(sample.buildIntent(this));
+    startService(sample.buildServiceIntent(this));
+//    startActivity(sample.buildIntent(this));
   }
 
   private final class SampleListLoader extends AsyncTask<String, Void, List<SampleGroup>> {
@@ -385,6 +386,17 @@ public class SampleChooserActivity extends Activity {
 
     public Intent buildIntent(Context context) {
       Intent intent = new Intent(context, PlayerActivity.class);
+      intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
+      if (drmSchemeUuid != null) {
+        intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
+        intent.putExtra(PlayerActivity.DRM_LICENSE_URL, drmLicenseUrl);
+        intent.putExtra(PlayerActivity.DRM_KEY_REQUEST_PROPERTIES, drmKeyRequestProperties);
+      }
+      return intent;
+    }
+
+    public Intent buildServiceIntent(Context context) {
+      Intent intent = new Intent(context, PlayerService.class);
       intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
       if (drmSchemeUuid != null) {
         intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
