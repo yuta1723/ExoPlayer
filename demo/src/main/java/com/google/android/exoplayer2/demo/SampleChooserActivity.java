@@ -16,12 +16,15 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -54,6 +57,21 @@ import java.util.UUID;
 public class SampleChooserActivity extends Activity {
 
   private static final String TAG = "SampleChooserActivity";
+
+  private ServiceConnection mConnection = new ServiceConnection() {
+    PlayerService mBindService;
+    public void onServiceConnected(ComponentName className, IBinder service) {
+      // Serviceとの接続確立時に呼び出される。
+      // service引数には、Onbind()で返却したBinderが渡される
+      mBindService = ((PlayerService.LocalBinder)service).getService();
+      //必要であればmBoundServiceを使ってバインドしたServiceへの制御を行う
+    }
+
+    public void onServiceDisconnected(ComponentName className) {
+      // Serviceとの切断時に呼び出される。
+      mBindService = null;
+    }
+  };
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -104,8 +122,17 @@ public class SampleChooserActivity extends Activity {
 
   private void onSampleSelected(Sample sample) {
     startService(sample.buildServiceIntent(this));
+    bindService(sample.buildServiceIntent(this),mConnection,Context.BIND_AUTO_CREATE);
 //    startActivity(sample.buildIntent(this));
   }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    unbindService(mConnection);
+  }
+
+
 
   private final class SampleListLoader extends AsyncTask<String, Void, List<SampleGroup>> {
 

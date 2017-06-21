@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -45,10 +46,18 @@ public class PlayerService extends Service {
     private Uri contentUrl = Uri.parse("http://54.248.249.96/maruyama/short.mp4");
     private String contentExtention = "mp4";
 
+    public class LocalBinder extends Binder {
+        //Serviceの取得
+        PlayerService getService() {
+            return PlayerService.this;
+        }
+    }
+
+    private final IBinder mBinder = new LocalBinder();
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
-        createPlayerInstance();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -75,7 +84,24 @@ public class PlayerService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
-        return null;
+        createPlayerInstance();
+        return mBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG,"onUnbind");
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+        return false;
+//        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        Log.d(TAG,"onRebind");
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
