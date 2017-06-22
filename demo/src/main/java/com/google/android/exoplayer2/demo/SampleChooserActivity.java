@@ -121,15 +121,25 @@ public class SampleChooserActivity extends Activity {
   }
 
   private void onSampleSelected(Sample sample) {
-    startService(sample.buildServiceIntent(this));
-    bindService(sample.buildServiceIntent(this),mConnection,Context.BIND_AUTO_CREATE);
-//    startActivity(sample.buildIntent(this));
+//    startService(sample.buildServiceIntent(this));
+//    bindService(sample.buildServiceIntent(this),mConnection,Context.BIND_AUTO_CREATE);
+    startActivity(sample.buildIntent(this));
+  }
+
+  @Override
+  protected void onRestart() {
+    super.onRestart();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
-    unbindService(mConnection);
+//    unbindService(mConnection);
   }
 
 

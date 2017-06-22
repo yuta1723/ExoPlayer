@@ -16,12 +16,17 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -84,6 +89,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public static final String DRM_LICENSE_URL = "drm_license_url";
   public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
   public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
+  public static final String CURRENT_POSITION_FOR_RESUME = "currentPosition_for_resume";
 
   public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
   public static final String EXTENSION_EXTRA = "extension";
@@ -117,6 +123,24 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private boolean shouldAutoPlay;
   private int resumeWindow;
   private long resumePosition;
+
+  private ServiceConnection mConnection = new ServiceConnection() {
+    PlayerService mBindService;
+    public void onServiceConnected(ComponentName className, IBinder service) {
+      // Serviceとの接続確立時に呼び出される。
+      // service引数には、Onbind()で返却したBinderが渡される
+      mBindService = ((PlayerService.LocalBinder)service).getService();
+      //必要であればmBoundServiceを使ってバインドしたServiceへの制御を行う
+    }
+
+    public void onServiceDisconnected(ComponentName className) {
+      // Serviceとの切断時に呼び出される。
+      mBindService = null;
+    }
+  };
+
+  private boolean isBackground = false;
+  private String TAG = PlayerActivity.class.getSimpleName();
 
   // Activity lifecycle
 
@@ -165,6 +189,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
       initializePlayer();
+      stopBackgroundService();
     }
   }
 
@@ -172,6 +197,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onPause() {
     super.onPause();
     if (Util.SDK_INT <= 23) {
+//      releasePlayer();
+      startBackgroundService();
       releasePlayer();
     }
   }
@@ -180,8 +207,16 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onStop() {
     super.onStop();
     if (Util.SDK_INT > 23) {
+//      releasePlayer();
+      startBackgroundService();
       releasePlayer();
     }
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    stopBackgroundService();
   }
 
   @Override
@@ -371,6 +406,37 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       trackSelectionHelper = null;
       eventLogger = null;
     }
+  }
+
+  private void startBackgroundService() {
+    long currentPosition = 0;
+    isBackground = true;
+    if (player != null) {
+      currentPosition = player.getCurrentPosition();
+    }
+    bindService(buildServiceIntent(this, currentPosition), mConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  private void stopBackgroundService() {
+    if (isBackground) {
+      unbindService(mConnection);
+      isBackground = false;
+    }
+  }
+
+  public final boolean preferExtensionDecoders = false; //todo 実装する?
+
+  public Intent buildServiceIntent(Context context,long currentPosition) {
+    Intent intent = new Intent(context, PlayerService.class);
+    intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
+    intent.putExtra(CURRENT_POSITION_FOR_RESUME,currentPosition);
+    Log.d(TAG, "currentPosition : " + currentPosition);
+//    if (drmSchemeUuid != null) {
+//      intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
+//      intent.putExtra(PlayerActivity.DRM_LICENSE_URL, drmLicenseUrl);
+//      intent.putExtra(PlayerActivity.DRM_KEY_REQUEST_PROPERTIES, drmKeyRequestProperties);
+//    }
+    return intent;
   }
 
   private void updateResumePosition() {

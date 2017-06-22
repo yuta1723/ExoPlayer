@@ -45,6 +45,8 @@ public class PlayerService extends Service {
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private Uri contentUrl = Uri.parse("http://54.248.249.96/maruyama/short.mp4");
     private String contentExtention = "mp4";
+    private long resumePosition;
+    private boolean haveResumePosition = false;
 
     public class LocalBinder extends Binder {
         //Serviceの取得
@@ -84,6 +86,7 @@ public class PlayerService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
+        updateResumePositionForIntent(intent);
         createPlayerInstance();
         return mBinder;
     }
@@ -146,8 +149,21 @@ public class PlayerService extends Service {
         MediaSource mediaSource = new ExtractorMediaSource(contentUrl, mediaDataSourceFactory, new DefaultExtractorsFactory(),
                 mainHandler, eventLogger);
 
+        boolean haveResumePosition = resumePosition != 0;
+
+        if (haveResumePosition) {
+            player.seekTo(0, resumePosition);
+        }
         player.prepare(mediaSource, false, false);
         player.setPlayWhenReady(true);
 
+    }
+
+    private void updateResumePositionForIntent(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        resumePosition = intent.getLongExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME,0);
+        Log.d(TAG,"resumePosition : " + resumePosition);
     }
 }
