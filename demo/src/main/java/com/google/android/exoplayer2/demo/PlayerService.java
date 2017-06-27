@@ -23,6 +23,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.dash.DashMediaSource;
@@ -57,6 +58,16 @@ public class PlayerService extends Service {
 
     private int FLAG_PAUSE_INTENT = 100;
     private String ACTION_PAUSE_INTENT = "action_pause";
+
+    public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
+    public static final String EXTENSION_EXTRA = "extension";
+
+    public static final String ACTION_VIEW_LIST =
+            "com.google.android.exoplayer.demo.action.VIEW_LIST";
+    public static final String URI_LIST_EXTRA = "uri_list";
+
+    public static final String EXTENSION_LIST_EXTRA = "extension_list";
+
 
     public class LocalBinder extends Binder {
         //Serviceの取得
@@ -106,7 +117,7 @@ public class PlayerService extends Service {
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
         updateResumePositionForIntent(intent);
-        createPlayerInstance();
+        createPlayerInstance(intent);
         getAudioFocus();
         return mBinder;
     }
@@ -153,7 +164,7 @@ public class PlayerService extends Service {
                 .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
     }
 
-    private void createPlayerInstance() {
+    private void createPlayerInstance(Intent intent) {
         mainHandler = new Handler();
         eventLogger = new EventLogger(trackSelector);
         TrackSelection.Factory videoTrackSelectionFactory =
@@ -166,8 +177,36 @@ public class PlayerService extends Service {
                 ExoPlayerFactory.newSimpleInstance(getBaseContext(), trackSelector, new DefaultLoadControl());
 
 //        MediaSource mediaSource = buildMediaSource(contentUrl,contentExtention);
-        MediaSource mediaSource = new ExtractorMediaSource(contentUrl, mediaDataSourceFactory, new DefaultExtractorsFactory(),
-                mainHandler, eventLogger);
+
+
+        String action = intent.getAction();
+        Uri[] uris;
+        String[] extensions;
+        if (ACTION_VIEW.equals(action)) {
+            uris = new Uri[]{intent.getData()};
+            extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
+        } else if (ACTION_VIEW_LIST.equals(action)) {
+            String[] uriStrings = intent.getStringArrayExtra(URI_LIST_EXTRA);
+            uris = new Uri[uriStrings.length];
+            for (int i = 0; i < uriStrings.length; i++) {
+                uris[i] = Uri.parse(uriStrings[i]);
+            }
+            extensions = intent.getStringArrayExtra(EXTENSION_LIST_EXTRA);
+            if (extensions == null) {
+                extensions = new String[uriStrings.length];
+            }
+        } else {
+//                showToast(getString(R.string.unexpected_intent_action, action));
+            return;
+        }
+
+        MediaSource[] mediaSources = new MediaSource[uris.length];
+        for (int i = 0; i < uris.length; i++) {
+            mediaSources[i] = buildMediaSource(uris[i], extensions[i]);
+        }
+        MediaSource mediaSource = mediaSources.length == 1 ? mediaSources[0]
+                : new ConcatenatingMediaSource(mediaSources);
+
 
         boolean haveResumePosition = resumePosition != 0;
 
@@ -177,7 +216,8 @@ public class PlayerService extends Service {
         player.prepare(mediaSource, false, false);
         player.setPlayWhenReady(true);
 
-        Intent notificationIntent = new Intent(this, PlayerActivity.class);
+//        Intent notificationIntent = new Intent(this, PlayerActivity.class);
+        Intent notificationIntent = intent.setClass(this,PlayerActivity.class);
         PendingIntent conntentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         Intent notificationIntent2 = new Intent(this, PlayerService.class);
@@ -251,6 +291,7 @@ public class PlayerService extends Service {
             @Override
             public void onAudioFocusChange(int i) {
                 Log.d(TAG, "onAudioFocusChange");
+                player.setPlayWhenReady(false);
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 

@@ -90,6 +90,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
   public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
   public static final String CURRENT_POSITION_FOR_RESUME = "currentPosition_for_resume";
+  public static final String CURRENT_PLAYING_CONTENT_URL = "current_content_url";
 
   public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
   public static final String EXTENSION_EXTRA = "extension";
@@ -123,6 +124,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private boolean shouldAutoPlay;
   private int resumeWindow;
   private long resumePosition;
+  private Intent intent;
 
   private ServiceConnection mConnection = new ServiceConnection() {
     PlayerService mBindService;
@@ -170,10 +172,16 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   public void onNewIntent(Intent intent) {
+    Log.d(TAG,"onNewIntent");
     releasePlayer();
     shouldAutoPlay = true;
-    clearResumePosition();
+    if (intent.getLongExtra(CURRENT_POSITION_FOR_RESUME,0) != 0) {
+      resumePosition = intent.getLongExtra(CURRENT_POSITION_FOR_RESUME, 0);
+    } else {
+      clearResumePosition();
+    }
     setIntent(intent);
+    stopBackgroundService();
   }
 
   @Override
@@ -189,8 +197,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
       initializePlayer();
-      stopBackgroundService();
     }
+    stopBackgroundService();
   }
 
   @Override
@@ -265,7 +273,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   // Internal methods
 
   private void initializePlayer() {
-    Intent intent = getIntent();
+    intent = getIntent();
     if (player == null) {
       boolean preferExtensionDecoders = intent.getBooleanExtra(PREFER_EXTENSION_DECODERS, false);
       UUID drmSchemeUuid = intent.hasExtra(DRM_SCHEME_UUID_EXTRA)
@@ -418,6 +426,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   }
 
   private void stopBackgroundService() {
+    Log.d(TAG,"stopBackgroundService");
     if (isBackground) {
       unbindService(mConnection);
       isBackground = false;
@@ -427,8 +436,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public final boolean preferExtensionDecoders = false; //todo 実装する?
 
   public Intent buildServiceIntent(Context context,long currentPosition) {
-    Intent intent = new Intent(context, PlayerService.class);
-    intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
+//    Intent intent = new Intent(context, PlayerService.class);
+    intent.setClass(context,PlayerService.class);
+//    intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
     intent.putExtra(CURRENT_POSITION_FOR_RESUME,currentPosition);
     Log.d(TAG, "currentPosition : " + currentPosition);
 //    if (drmSchemeUuid != null) {
