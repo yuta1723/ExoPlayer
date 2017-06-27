@@ -1,10 +1,15 @@
 package com.google.android.exoplayer2.demo;
 
+import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -13,6 +18,7 @@ import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -48,6 +54,9 @@ public class PlayerService extends Service {
     private long resumePosition;
     private boolean haveResumePosition = false;
 
+    private int FLAG_PAUSE_INTENT = 100;
+    private String ACTION_PAUSE_INTENT = "action_pause";
+
     public class LocalBinder extends Binder {
         //Serviceの取得
         PlayerService getService() {
@@ -60,6 +69,15 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+        Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
+        if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
+            if (isPlaying()) {
+                player.setPlayWhenReady(false);
+            } else {
+                player.setPlayWhenReady(true);
+            }
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -93,7 +111,7 @@ public class PlayerService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.d(TAG,"onUnbind");
+        Log.d(TAG, "onUnbind");
         if (player != null) {
             player.release();
             player = null;
@@ -104,7 +122,7 @@ public class PlayerService extends Service {
 
     @Override
     public void onRebind(Intent intent) {
-        Log.d(TAG,"onRebind");
+        Log.d(TAG, "onRebind");
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
@@ -157,13 +175,71 @@ public class PlayerService extends Service {
         player.prepare(mediaSource, false, false);
         player.setPlayWhenReady(true);
 
+        Intent notificationIntent = new Intent(this, PlayerActivity.class);
+        PendingIntent conntentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        Intent notificationIntent2 = new Intent(this, PlayerService.class);
+        notificationIntent2.setAction(ACTION_PAUSE_INTENT);
+        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, notificationIntent2, 0);
+
+        Notification.Builder builder = new Notification.Builder(this);
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setContentTitle("TITLE iS XX");
+        builder.setContentText("Text is XX");
+        builder.setContentIntent(conntentIntent);
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+//            Notification.MediaStyle style = new Notification.MediaStyle();
+//            builder.setStyle(style);
+//        }
+        builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);  // #1
+        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        manager.notify(1, builder.build());
+
+
+//        Intent intent = new Intent(getApplicationContext(), PlayerService.class);
+//        PendingIntent pausePendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+//            Notification notification = new Notification.Builder(this)
+//                    // Show controls on lock screen even when user hides sensitive content.
+//                    .setVisibility(Notification.VISIBILITY_PUBLIC)
+//                    .setSmallIcon(R.mipmap.ic_launcher)
+//                    // Add media control buttons that invoke intents in your media service
+//                    //                .addAction(R.drawable.ic_prev, "Previous", prevPendingIntent) // #0
+//                    .addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent)  // #1
+//                    //                .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
+//                    // Apply the media style template
+//
+//                    .build();
+//
+//            NotificationManager mNotificationManager =
+//                    (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+//// mId allows you to update the notification later on.
+//            mNotificationManager.notify(15245, notification);
+//        }
     }
 
     private void updateResumePositionForIntent(Intent intent) {
         if (intent == null) {
             return;
         }
-        resumePosition = intent.getLongExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME,0);
-        Log.d(TAG,"resumePosition : " + resumePosition);
+        resumePosition = intent.getLongExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, 0);
+        Log.d(TAG, "resumePosition : " + resumePosition);
+    }
+
+    public boolean isPlaying() {
+        //Log.enter(TAG, "isPlaying", "");
+        if (player == null) {
+            return false;
+        }
+        if (player.getPlayWhenReady()) {
+            if (player.getPlaybackState() == ExoPlayer.STATE_READY || player.getPlaybackState() == ExoPlayer.STATE_BUFFERING) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 }

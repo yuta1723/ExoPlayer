@@ -292,6 +292,15 @@
     ]
   },
   {
+    "name": "MP4",
+    "samples": [
+      {
+        "name": "字幕用",
+        "uri": "http://54.248.249.96/maruyama/short.mp4"
+      }
+    ]
+  },
+  {
     "name": "HLS",
     "samples": [
       {
