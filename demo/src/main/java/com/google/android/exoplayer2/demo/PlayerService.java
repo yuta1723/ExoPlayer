@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -106,6 +107,7 @@ public class PlayerService extends Service {
         Log.d(TAG, "onBind");
         updateResumePositionForIntent(intent);
         createPlayerInstance();
+        getAudioFocus();
         return mBinder;
     }
 
@@ -241,5 +243,16 @@ public class PlayerService extends Service {
         } else {
             return false;
         }
+    }
+
+    private void getAudioFocus() {
+        AudioManager am = (AudioManager) getSystemService(this.AUDIO_SERVICE);
+        am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+            @Override
+            public void onAudioFocusChange(int i) {
+                Log.d(TAG, "onAudioFocusChange");
+            }
+        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
     }
 }
