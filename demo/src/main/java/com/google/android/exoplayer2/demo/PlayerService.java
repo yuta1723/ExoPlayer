@@ -291,9 +291,21 @@ public class PlayerService extends Service {
             @Override
             public void onAudioFocusChange(int i) {
                 Log.d(TAG, "onAudioFocusChange");
-                player.setPlayWhenReady(false);
+                if (player == null) {
+                    return;
+                }
+                if (isPlaying()) {
+                    Log.d(TAG,"play stop");
+
+                    player.setPlayWhenReady(false);
+                } else {
+
+                    //他のstreamにfocasされた際に、再生を停止する処理は必須だが
+                    //他のstreamからこのServiceにfocusされた際に再生を開始すべき?
+                    Log.d(TAG,"play start");
+                    player.setPlayWhenReady(true);
+                }
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
     }
 }
