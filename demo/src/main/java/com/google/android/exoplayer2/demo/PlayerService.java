@@ -59,6 +59,9 @@ public class PlayerService extends Service {
     private int FLAG_PAUSE_INTENT = 100;
     private String ACTION_PAUSE_INTENT = "action_pause";
 
+    private static int NOTIFICATION_ID = 10000;
+
+
     public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
     public static final String EXTENSION_EXTRA = "extension";
 
@@ -235,7 +238,7 @@ public class PlayerService extends Service {
 //        }
         builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);  // #1
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        manager.notify(1, builder.build());
+        manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
 
 
 //        Intent intent = new Intent(getApplicationContext(), PlayerService.class);
@@ -307,5 +310,9 @@ public class PlayerService extends Service {
                 }
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+
+    public static int getNotificationId() {
+        return NOTIFICATION_ID;
     }
 }

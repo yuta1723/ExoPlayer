@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -430,7 +431,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     if (isBackground) {
       unbindService(mConnection);
       isBackground = false;
+      goneNotification();
     }
+  }
+
+  private void goneNotification() {
+    NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+    manager.cancel(PlayerService.getNotificationId());
   }
 
   public final boolean preferExtensionDecoders = false; //todo 実装する?
