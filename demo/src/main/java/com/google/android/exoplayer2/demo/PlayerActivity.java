@@ -182,11 +182,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       clearResumePosition();
     }
     setIntent(intent);
-    stopBackgroundService();
+    stopBackgroundService();//通知を押下することで、stopBackgroundService()が2回呼ばれてる
   }
 
   @Override
   public void onStart() {
+    Log.d(TAG, "onStart()");
     super.onStart();
     if (Util.SDK_INT > 23) {
       initializePlayer();
@@ -195,6 +196,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   public void onResume() {
+    Log.d(TAG, "onResume()");
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
       initializePlayer();
@@ -204,6 +206,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   public void onPause() {
+    Log.d(TAG, "onPause()");
     super.onPause();
     if (Util.SDK_INT <= 23) {
 //      releasePlayer();
@@ -214,6 +217,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   public void onStop() {
+    Log.d(TAG, "onStop()");
     super.onStop();
     if (Util.SDK_INT > 23) {
 //      releasePlayer();
@@ -224,6 +228,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   protected void onDestroy() {
+    Log.d(TAG, "onDestroy()");
     super.onDestroy();
     stopBackgroundService();
   }
@@ -274,6 +279,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   // Internal methods
 
   private void initializePlayer() {
+    Log.d(TAG, "initializePlayer");
     intent = getIntent();
     if (player == null) {
       boolean preferExtensionDecoders = intent.getBooleanExtra(PREFER_EXTENSION_DECODERS, false);

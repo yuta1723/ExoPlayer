@@ -1,6 +1,5 @@
 package com.google.android.exoplayer2.demo;
 
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,7 +9,6 @@ import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -58,6 +56,7 @@ public class PlayerService extends Service {
 
     private int FLAG_PAUSE_INTENT = 100;
     private String ACTION_PAUSE_INTENT = "action_pause";
+    private String ACTION_RESTART_ACTIVITY = "action_restart_activity";
 
     private static int NOTIFICATION_ID = 10000;
 
@@ -84,6 +83,9 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+        if (intent == null) {
+            return super.onStartCommand(intent, flags, startId);
+        }
         Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
         if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
             if (isPlaying()) {
@@ -91,8 +93,17 @@ public class PlayerService extends Service {
             } else {
                 player.setPlayWhenReady(true);
             }
+        } else if (intent.getAction().equals(ACTION_RESTART_ACTIVITY)) {
+            intent.setAction(PlayerActivity.ACTION_VIEW);
+            Log.d(TAG, "back to playback into activity");
+            intent.setClass(this,PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
+            long currentPosition = 0;
+            if(player != null) {
+                currentPosition = player.getCurrentPosition();
+            }
+            intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
+            startActivity(intent);
         }
-
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -220,8 +231,9 @@ public class PlayerService extends Service {
         player.setPlayWhenReady(true);
 
 //        Intent notificationIntent = new Intent(this, PlayerActivity.class);
-        Intent notificationIntent = intent.setClass(this,PlayerActivity.class);
-        PendingIntent conntentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        Intent notificationIntent = intent.setClass(this,PlayerService.class);
+        notificationIntent.setAction(ACTION_RESTART_ACTIVITY);
+        PendingIntent conntentIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
 
         Intent notificationIntent2 = new Intent(this, PlayerService.class);
         notificationIntent2.setAction(ACTION_PAUSE_INTENT);
@@ -316,3 +328,7 @@ public class PlayerService extends Service {
         return NOTIFICATION_ID;
     }
 }
+
+//todo 通知が削除された際の処理。
+//todo 通知が押下された際の処理。
+//todo 一回backgroundに遷移したら2回目以降はbackground再生されない。
