@@ -6,7 +6,11 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.media.AudioManager;
+import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
@@ -36,6 +40,11 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 /**
  * Created by y.naito on 2017/06/21.
  */
@@ -59,7 +68,7 @@ public class PlayerService extends Service {
     private int FLAG_SEEK_TO_FOWARD_INTENT = 102;
     private String ACTION_PAUSE_INTENT = "action_pause";
     private String ACTION_SEEK_TO_PREVIOUS_INTENT = "action_seek_to_previous";
-    private String ACTION_SEEK_TO_FOWARD_INTENT = "action_seek_to_foward";
+    private String ACTION_SEEK_TO_FOWARD_INTENT = "action_seek_to_forward";
     private String ACTION_RESTART_ACTIVITY = "action_restart_activity";
 
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
@@ -76,6 +85,8 @@ public class PlayerService extends Service {
     public static final String URI_LIST_EXTRA = "uri_list";
 
     public static final String EXTENSION_LIST_EXTRA = "extension_list";
+
+    private String thumnailUrl = "http://54.248.249.96/hama3/meta/bigbuckbunny.jpg";
 
 
     public class LocalBinder extends Binder {
@@ -263,16 +274,22 @@ public class PlayerService extends Service {
 
         Notification.Builder builder = new Notification.Builder(this);
         builder.setSmallIcon(R.mipmap.ic_launcher);
+//        Bitmap bmp1 = getBitmapFromURL(thumnailUrl);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
         builder.setContentText("Text is XX");
         builder.setContentIntent(conntentIntent);
-//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-//            Notification.MediaStyle style = new Notification.MediaStyle();
-//            builder.setStyle(style);
-//        }
-        builder.addAction(R.drawable.exo_controls_pause, "<<", seekToPreviousPendingIntent);
+        builder.addAction(R.drawable.exo_controls_previous, "<<", seekToPreviousPendingIntent);
         builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);
-        builder.addAction(R.drawable.exo_controls_pause, ">>", seekToFowardsPendingIntent);
+        builder.addAction(R.drawable.exo_controls_fastforward, ">>", seekToFowardsPendingIntent);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
+            builder.setStyle(new Notification.MediaStyle()
+                    .setMediaSession(mediaSession.getSessionToken())
+                    .setShowActionsInCompactView(1));
+            builder.setColor(Color.RED);
+        }
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
 
@@ -350,6 +367,21 @@ public class PlayerService extends Service {
 
     public static int getNotificationId() {
         return NOTIFICATION_ID;
+    }
+
+    public static Bitmap getBitmapFromURL(String src) {
+        try {
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            // Log exception
+            return null;
+        }
     }
 }
 
