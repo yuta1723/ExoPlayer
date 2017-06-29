@@ -424,6 +424,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   }
 
   private void startBackgroundService() {
+    Log.d(TAG, "startBackgroundService");
     long currentPosition = 0;
     isBackground = true;
     if (player != null) {

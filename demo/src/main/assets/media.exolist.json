@@ -295,8 +295,11 @@
     "name": "MP4",
     "samples": [
       {
-        "name": "字幕用",
-        "uri": "http://54.248.249.96/maruyama/short.mp4"
+        "name": "字幕用1",
+        "uri": "http://54.248.249.96/naito/short.mp4"
+      }, {
+        "name": "字幕用2",
+        "uri": "http://54.248.249.96/naito/MED_Education.mp4"
       }
     ]
   },

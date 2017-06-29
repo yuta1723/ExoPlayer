@@ -55,8 +55,15 @@ public class PlayerService extends Service {
     private boolean haveResumePosition = false;
 
     private int FLAG_PAUSE_INTENT = 100;
+    private int FLAG_SEEK_TO_PREVIOUS_INTENT = 101;
+    private int FLAG_SEEK_TO_FOWARD_INTENT = 102;
     private String ACTION_PAUSE_INTENT = "action_pause";
+    private String ACTION_SEEK_TO_PREVIOUS_INTENT = "action_seek_to_previous";
+    private String ACTION_SEEK_TO_FOWARD_INTENT = "action_seek_to_foward";
     private String ACTION_RESTART_ACTIVITY = "action_restart_activity";
+
+    private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
+    private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
     private static int NOTIFICATION_ID = 10000;
 
@@ -83,7 +90,7 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
-        if (intent == null) {
+        if (intent == null || player == null) {
             return super.onStartCommand(intent, flags, startId);
         }
         Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
@@ -93,12 +100,16 @@ public class PlayerService extends Service {
             } else {
                 player.setPlayWhenReady(true);
             }
+        } else if (intent.getAction().equals(ACTION_SEEK_TO_PREVIOUS_INTENT)) {
+            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
+        } else if (intent.getAction().equals(ACTION_SEEK_TO_FOWARD_INTENT)) {
+            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
         } else if (intent.getAction().equals(ACTION_RESTART_ACTIVITY)) {
             intent.setAction(PlayerActivity.ACTION_VIEW);
             Log.d(TAG, "back to playback into activity");
-            intent.setClass(this,PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
+            intent.setClass(this, PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
             long currentPosition = 0;
-            if(player != null) {
+            if (player != null) { //null判定しているので、いらない。
                 currentPosition = player.getCurrentPosition();
             }
             intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
@@ -150,6 +161,9 @@ public class PlayerService extends Service {
     @Override
     public void onRebind(Intent intent) {
         Log.d(TAG, "onRebind");
+        updateResumePositionForIntent(intent);
+        createPlayerInstance(intent);
+        getAudioFocus();
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
@@ -231,13 +245,21 @@ public class PlayerService extends Service {
         player.setPlayWhenReady(true);
 
 //        Intent notificationIntent = new Intent(this, PlayerActivity.class);
-        Intent notificationIntent = intent.setClass(this,PlayerService.class);
+        Intent notificationIntent = intent.setClass(this, PlayerService.class);
         notificationIntent.setAction(ACTION_RESTART_ACTIVITY);
         PendingIntent conntentIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
 
-        Intent notificationIntent2 = new Intent(this, PlayerService.class);
-        notificationIntent2.setAction(ACTION_PAUSE_INTENT);
-        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, notificationIntent2, 0);
+        Intent pausePlayerIntent = new Intent(this, PlayerService.class);
+        pausePlayerIntent.setAction(ACTION_PAUSE_INTENT);
+        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, pausePlayerIntent, 0);
+
+        Intent seekToPreviousIntent = new Intent(this, PlayerService.class);
+        seekToPreviousIntent.setAction(ACTION_SEEK_TO_PREVIOUS_INTENT);
+        PendingIntent seekToPreviousPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_PREVIOUS_INTENT, seekToPreviousIntent, 0);
+
+        Intent seekToFowardIntent = new Intent(this, PlayerService.class);
+        seekToFowardIntent.setAction(ACTION_SEEK_TO_FOWARD_INTENT);
+        PendingIntent seekToFowardsPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_FOWARD_INTENT, seekToFowardIntent, 0);
 
         Notification.Builder builder = new Notification.Builder(this);
         builder.setSmallIcon(R.mipmap.ic_launcher);
@@ -248,7 +270,9 @@ public class PlayerService extends Service {
 //            Notification.MediaStyle style = new Notification.MediaStyle();
 //            builder.setStyle(style);
 //        }
-        builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);  // #1
+        builder.addAction(R.drawable.exo_controls_pause, "<<", seekToPreviousPendingIntent);
+        builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);
+        builder.addAction(R.drawable.exo_controls_pause, ">>", seekToFowardsPendingIntent);
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
 
@@ -310,14 +334,14 @@ public class PlayerService extends Service {
                     return;
                 }
                 if (isPlaying()) {
-                    Log.d(TAG,"play stop");
+                    Log.d(TAG, "play stop");
 
                     player.setPlayWhenReady(false);
                 } else {
 
                     //他のstreamにfocasされた際に、再生を停止する処理は必須だが
                     //他のstreamからこのServiceにfocusされた際に再生を開始すべき?
-                    Log.d(TAG,"play start");
+                    Log.d(TAG, "play start");
                     player.setPlayWhenReady(true);
                 }
             }
@@ -332,3 +356,8 @@ public class PlayerService extends Service {
 //todo 通知が削除された際の処理。
 //todo 通知が押下された際の処理。
 //todo 一回backgroundに遷移したら2回目以降はbackground再生されない。
+
+//todo seekボタンを追加 ( -15秒 , +15秒)
+//todo 通知領域に表示されているplay/pauseを切り替え
+//todo ボタンに変化
+//todo plaerインスタンスをやりとりする処理を追加(playerインスタンスのやりとりを行わないと、live , dvrなどのresumeが行い辛くなる。)
