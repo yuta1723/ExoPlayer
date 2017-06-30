@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -165,7 +166,7 @@ public class PlayerService extends Service {
             player.release();
             player = null;
         }
-        return false;
+        return true;
 //        return super.onUnbind(intent);
     }
 
@@ -273,9 +274,12 @@ public class PlayerService extends Service {
         PendingIntent seekToFowardsPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_FOWARD_INTENT, seekToFowardIntent, 0);
 
         Notification.Builder builder = new Notification.Builder(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.setColor(Color.RED);
+        }
         builder.setSmallIcon(R.mipmap.ic_launcher);
 //        Bitmap bmp1 = getBitmapFromURL(thumnailUrl);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
         builder.setContentText("Text is XX");
@@ -283,12 +287,11 @@ public class PlayerService extends Service {
         builder.addAction(R.drawable.exo_controls_previous, "<<", seekToPreviousPendingIntent);
         builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", seekToFowardsPendingIntent);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
             builder.setStyle(new Notification.MediaStyle()
                     .setMediaSession(mediaSession.getSessionToken())
                     .setShowActionsInCompactView(1));
-            builder.setColor(Color.RED);
         }
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id

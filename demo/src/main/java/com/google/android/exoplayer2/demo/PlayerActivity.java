@@ -130,6 +130,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private ServiceConnection mConnection = new ServiceConnection() {
     PlayerService mBindService;
     public void onServiceConnected(ComponentName className, IBinder service) {
+      Log.d(TAG,"onServiceConnected");
       // Serviceとの接続確立時に呼び出される。
       // service引数には、Onbind()で返却したBinderが渡される
       mBindService = ((PlayerService.LocalBinder)service).getService();
@@ -137,6 +138,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     }
 
     public void onServiceDisconnected(ComponentName className) {
+      Log.d(TAG,"onServiceConnected");
       // Serviceとの切断時に呼び出される。
       mBindService = null;
     }
