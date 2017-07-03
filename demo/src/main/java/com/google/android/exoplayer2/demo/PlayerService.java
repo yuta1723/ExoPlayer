@@ -4,7 +4,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -116,6 +119,16 @@ public class PlayerService extends Service {
         Log.d(TAG, "onCreate");
         super.onCreate();
         mediaDataSourceFactory = buildDataSourceFactory(true);
+
+
+        IntentFilter commandFilter = new IntentFilter();
+        commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
+        commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
+        commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
+        commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
+
+        registerReceiver(mIntentReceiver, commandFilter);
+
     }
 
     @Override
@@ -407,6 +420,15 @@ public class PlayerService extends Service {
     private PendingIntent getPendingIntentWithBroadcast(String action) {
         return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
     }
+
+
+    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            String cmd = intent.getStringExtra("command");
+        }
+    };
 
 }
 
