@@ -258,21 +258,21 @@ public class PlayerService extends Service {
         player.setPlayWhenReady(true);
 
 //        Intent notificationIntent = new Intent(this, PlayerActivity.class);
-        Intent notificationIntent = intent.setClass(this, PlayerService.class);
-        notificationIntent.setAction(ACTION_RESTART_ACTIVITY);
-        PendingIntent conntentIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
-
-        Intent pausePlayerIntent = new Intent(this, PlayerService.class);
-        pausePlayerIntent.setAction(ACTION_PAUSE_INTENT);
-        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, pausePlayerIntent, 0);
-
-        Intent seekToPreviousIntent = new Intent(this, PlayerService.class);
-        seekToPreviousIntent.setAction(ACTION_SEEK_TO_PREVIOUS_INTENT);
-        PendingIntent seekToPreviousPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_PREVIOUS_INTENT, seekToPreviousIntent, 0);
-
-        Intent seekToFowardIntent = new Intent(this, PlayerService.class);
-        seekToFowardIntent.setAction(ACTION_SEEK_TO_FOWARD_INTENT);
-        PendingIntent seekToFowardsPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_FOWARD_INTENT, seekToFowardIntent, 0);
+//        Intent notificationIntent = intent.setClass(this, PlayerService.class);
+//        notificationIntent.setAction(ACTION_RESTART_ACTIVITY);
+//        PendingIntent conntentIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
+//
+//        Intent pausePlayerIntent = new Intent(this, PlayerService.class);
+//        pausePlayerIntent.setAction(ACTION_PAUSE_INTENT);
+//        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, pausePlayerIntent, 0);
+//
+//        Intent seekToPreviousIntent = new Intent(this, PlayerService.class);
+//        seekToPreviousIntent.setAction(ACTION_SEEK_TO_PREVIOUS_INTENT);
+//        PendingIntent seekToPreviousPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_PREVIOUS_INTENT, seekToPreviousIntent, 0);
+//
+//        Intent seekToFowardIntent = new Intent(this, PlayerService.class);
+//        seekToFowardIntent.setAction(ACTION_SEEK_TO_FOWARD_INTENT);
+//        PendingIntent seekToFowardsPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_FOWARD_INTENT, seekToFowardIntent, 0);
 
         Notification.Builder builder = new Notification.Builder(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -284,10 +284,11 @@ public class PlayerService extends Service {
         builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
         builder.setContentText("Text is XX");
-        builder.setContentIntent(conntentIntent);
-        builder.addAction(R.drawable.exo_controls_previous, "<<", seekToPreviousPendingIntent);
-        builder.addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent);
-        builder.addAction(R.drawable.exo_controls_fastforward, ">>", seekToFowardsPendingIntent);
+        builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+        builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+        builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+        builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
             builder.setStyle(new Notification.MediaStyle()
@@ -402,6 +403,11 @@ public class PlayerService extends Service {
             return null;
         }
     }
+
+    private PendingIntent getPendingIntentWithBroadcast(String action) {
+        return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
+    }
+
 }
 
 //todo 通知が削除された際の処理。

@@ -79,6 +79,17 @@
         android:name="com.google.android.exoplayer2.demo.PlayerService"
         android:exported="false" />
 
+      <receiver android:name=".NotificationReceiver">
+          <intent-filter>
+              <!--定義したactionを追記する-->
+              <action android:name="action_seek_to_previous" />
+              <action android:name="action_pause" />
+              <action android:name="action_seek_to_forward" />
+              <action android:name="action_restart_activity" />
+          </intent-filter>
+      </receiver>
+
+
   </application>
 
 </manifest>
