@@ -100,37 +100,6 @@ public class PlayerService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        if (intent == null || player == null) {
-            return super.onStartCommand(intent, flags, startId);
-        }
-        Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
-        if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
-            if (isPlaying()) {
-                player.setPlayWhenReady(false);
-            } else {
-                player.setPlayWhenReady(true);
-            }
-        } else if (intent.getAction().equals(ACTION_SEEK_TO_PREVIOUS_INTENT)) {
-            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(ACTION_SEEK_TO_FOWARD_INTENT)) {
-            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(ACTION_RESTART_ACTIVITY)) {
-            intent.setAction(PlayerActivity.ACTION_VIEW);
-            Log.d(TAG, "back to playback into activity");
-            intent.setClass(this, PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
-            long currentPosition = 0;
-            if (player != null) { //null判定しているので、いらない。
-                currentPosition = player.getCurrentPosition();
-            }
-            intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
-            startActivity(intent);
-        }
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
@@ -166,8 +135,8 @@ public class PlayerService extends Service {
             player.release();
             player = null;
         }
-        return true;
-//        return super.onUnbind(intent);
+//        return true;
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -350,19 +319,34 @@ public class PlayerService extends Service {
             @Override
             public void onAudioFocusChange(int i) {
                 Log.d(TAG, "onAudioFocusChange");
+                //本来はより細かな制御をかけるべき
                 if (player == null) {
                     return;
                 }
-                if (isPlaying()) {
-                    Log.d(TAG, "play stop");
+                if (i == AudioManager.AUDIOFOCUS_LOSS) {
+                    if (isPlaying()) {
+                        Log.d(TAG, "play stop");
 
-                    player.setPlayWhenReady(false);
+                        player.setPlayWhenReady(false);
+                    }
+                    player.release();
+                    player = null;
                 } else {
+                    Log.d(TAG, "type : " + i);
+                    if (player == null) {
+                        return;
+                    }
+                    if (isPlaying()) {
+                        Log.d(TAG, "play stop");
 
-                    //他のstreamにfocasされた際に、再生を停止する処理は必須だが
-                    //他のstreamからこのServiceにfocusされた際に再生を開始すべき?
-                    Log.d(TAG, "play start");
-                    player.setPlayWhenReady(true);
+                        player.setPlayWhenReady(false);
+                    } else {
+
+                        //他のstreamにfocasされた際に、再生を停止する処理は必須だが
+                        //他のstreamからこのServiceにfocusされた際に再生を開始すべき?
+                        Log.d(TAG, "play start");
+                        player.setPlayWhenReady(true);
+                    }
                 }
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);

@@ -151,6 +151,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    Log.d(TAG,"onCreate");
     super.onCreate(savedInstanceState);
     shouldAutoPlay = true;
     clearResumePosition();
@@ -455,7 +456,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 //    Intent intent = new Intent(context, PlayerService.class);
     intent.setClass(context,PlayerService.class);
 //    intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
-    intent.putExtra(CURRENT_POSITION_FOR_RESUME,currentPosition);
+    intent.putExtra(CURRENT_POSITION_FOR_RESUME, currentPosition);
     Log.d(TAG, "currentPosition : " + currentPosition);
 //    if (drmSchemeUuid != null) {
 //      intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
