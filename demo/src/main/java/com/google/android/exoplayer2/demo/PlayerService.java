@@ -118,6 +118,38 @@ public class PlayerService extends Service {
         mediaDataSourceFactory = buildDataSourceFactory(true);
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand");
+        if (intent == null || player == null) {
+            return super.onStartCommand(intent, flags, startId);
+        }
+        Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
+        if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
+            if (isPlaying()) {
+                player.setPlayWhenReady(false);
+            } else {
+                player.setPlayWhenReady(true);
+            }
+        } else if (intent.getAction().equals(ACTION_SEEK_TO_PREVIOUS_INTENT)) {
+            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
+        } else if (intent.getAction().equals(ACTION_SEEK_TO_FOWARD_INTENT)) {
+            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
+        } else if (intent.getAction().equals(ACTION_RESTART_ACTIVITY)) {
+            intent.setAction(PlayerActivity.ACTION_VIEW);
+            Log.d(TAG, "back to playback into activity");
+            intent.setClass(this, PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
+            long currentPosition = 0;
+            if (player != null) { //null判定しているので、いらない。
+                currentPosition = player.getCurrentPosition();
+            }
+            intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
+            startActivity(intent);
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
