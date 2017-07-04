@@ -131,18 +131,18 @@ public class PlayerService extends Service {
 
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
+    private void checkIntent(Intent intent) {
         if (intent == null || player == null) {
-            return super.onStartCommand(intent, flags, startId);
+            return;
         }
-        Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
         if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
             if (isPlaying()) {
+
                 player.setPlayWhenReady(false);
+                createPlayNotification();
             } else {
                 player.setPlayWhenReady(true);
+                createPauseNotification();
             }
         } else if (intent.getAction().equals(ACTION_SEEK_TO_PREVIOUS_INTENT)) {
             player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
@@ -159,6 +159,17 @@ public class PlayerService extends Service {
             intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
             startActivity(intent);
         }
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand");
+        if (intent == null || player == null) {
+            return super.onStartCommand(intent, flags, startId);
+        }
+        Log.d(TAG, "flags : " + flags + " startId " + startId + " intent " + intent.toString());
+        checkIntent(intent);
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -180,6 +191,8 @@ public class PlayerService extends Service {
             player.release();
             player = null;
         }
+        stopSelf();
+        unregisterReceiver(mIntentReceiver);
 //        return true;
         return super.onUnbind(intent);
     }
@@ -230,9 +243,6 @@ public class PlayerService extends Service {
         player =
                 ExoPlayerFactory.newSimpleInstance(getBaseContext(), trackSelector, new DefaultLoadControl());
 
-//        MediaSource mediaSource = buildMediaSource(contentUrl,contentExtention);
-
-
         String action = intent.getAction();
         Uri[] uris;
         String[] extensions;
@@ -269,30 +279,15 @@ public class PlayerService extends Service {
         }
         player.prepare(mediaSource, false, false);
         player.setPlayWhenReady(true);
+        createPauseNotification();
+    }
 
-//        Intent notificationIntent = new Intent(this, PlayerActivity.class);
-//        Intent notificationIntent = intent.setClass(this, PlayerService.class);
-//        notificationIntent.setAction(ACTION_RESTART_ACTIVITY);
-//        PendingIntent conntentIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
-//
-//        Intent pausePlayerIntent = new Intent(this, PlayerService.class);
-//        pausePlayerIntent.setAction(ACTION_PAUSE_INTENT);
-//        PendingIntent pausePendingIntent = PendingIntent.getService(this, FLAG_PAUSE_INTENT, pausePlayerIntent, 0);
-//
-//        Intent seekToPreviousIntent = new Intent(this, PlayerService.class);
-//        seekToPreviousIntent.setAction(ACTION_SEEK_TO_PREVIOUS_INTENT);
-//        PendingIntent seekToPreviousPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_PREVIOUS_INTENT, seekToPreviousIntent, 0);
-//
-//        Intent seekToFowardIntent = new Intent(this, PlayerService.class);
-//        seekToFowardIntent.setAction(ACTION_SEEK_TO_FOWARD_INTENT);
-//        PendingIntent seekToFowardsPendingIntent = PendingIntent.getService(this, FLAG_SEEK_TO_FOWARD_INTENT, seekToFowardIntent, 0);
-
+    private void createPauseNotification() {
         Notification.Builder builder = new Notification.Builder(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             builder.setColor(Color.RED);
         }
         builder.setSmallIcon(R.mipmap.ic_launcher);
-//        Bitmap bmp1 = getBitmapFromURL(thumnailUrl);
         Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
@@ -310,29 +305,31 @@ public class PlayerService extends Service {
         }
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
+    }
 
+    private void createPlayNotification() {
+        Notification.Builder builder = new Notification.Builder(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.setColor(Color.RED);
+        }
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
+        builder.setLargeIcon(bmp1);
+        builder.setContentTitle("TITLE iS XX");
+        builder.setContentText("Text is XX");
+        builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+        builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+        builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+        builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
-//        Intent intent = new Intent(getApplicationContext(), PlayerService.class);
-//        PendingIntent pausePendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
-
-//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-//            Notification notification = new Notification.Builder(this)
-//                    // Show controls on lock screen even when user hides sensitive content.
-//                    .setVisibility(Notification.VISIBILITY_PUBLIC)
-//                    .setSmallIcon(R.mipmap.ic_launcher)
-//                    // Add media control buttons that invoke intents in your media service
-//                    //                .addAction(R.drawable.ic_prev, "Previous", prevPendingIntent) // #0
-//                    .addAction(R.drawable.exo_controls_pause, "Pause", pausePendingIntent)  // #1
-//                    //                .addAction(R.drawable.ic_next, "Next", nextPendingIntent)     // #2
-//                    // Apply the media style template
-//
-//                    .build();
-//
-//            NotificationManager mNotificationManager =
-//                    (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-//// mId allows you to update the notification later on.
-//            mNotificationManager.notify(15245, notification);
-//        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
+            builder.setStyle(new Notification.MediaStyle()
+                    .setMediaSession(mediaSession.getSessionToken())
+                    .setShowActionsInCompactView(1));
+        }
+        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
     }
 
     private void updateResumePositionForIntent(Intent intent) {
@@ -425,6 +422,7 @@ public class PlayerService extends Service {
     private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive : intent " + intent + " context : " + context);
             String action = intent.getAction();
             String cmd = intent.getStringExtra("command");
         }

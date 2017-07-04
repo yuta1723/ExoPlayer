@@ -22,16 +22,16 @@ public class NotificationReceiver extends BroadcastReceiver {
         Log.d(TAG, "action " + action);
         switch (action) {
             case PlayerUtil.ACTION_RESTART_ACTIVITY:
-                createPlayerActivityIntent(intent, action);
+                context.startActivity(createPlayerActivityIntent(intent, action));
                 break;
             case PlayerUtil.ACTION_PAUSE_INTENT:
-                createPlayerServiceIntent(context, action);
+                context.startService(createPlayerServiceIntent(context, action));
                 break;
             case PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT:
-                createPlayerServiceIntent(context, action);
+                context.startService(createPlayerServiceIntent(context, action));
                 break;
             case PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT:
-                createPlayerServiceIntent(context, action);
+                context.startService(createPlayerServiceIntent(context, action));
                 break;
         }
     }
