@@ -86,6 +86,7 @@
               <action android:name="action_pause" />
               <action android:name="action_seek_to_forward" />
               <action android:name="action_restart_activity" />
+              <action android:name="action_delete_player" />
           </intent-filter>
       </receiver>
 

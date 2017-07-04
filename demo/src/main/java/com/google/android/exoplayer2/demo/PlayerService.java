@@ -70,10 +70,6 @@ public class PlayerService extends Service {
     private int FLAG_PAUSE_INTENT = 100;
     private int FLAG_SEEK_TO_PREVIOUS_INTENT = 101;
     private int FLAG_SEEK_TO_FOWARD_INTENT = 102;
-    private String ACTION_PAUSE_INTENT = "action_pause";
-    private String ACTION_SEEK_TO_PREVIOUS_INTENT = "action_seek_to_previous";
-    private String ACTION_SEEK_TO_FOWARD_INTENT = "action_seek_to_forward";
-    private String ACTION_RESTART_ACTIVITY = "action_restart_activity";
 
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
     private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
@@ -135,31 +131,43 @@ public class PlayerService extends Service {
         if (intent == null || player == null) {
             return;
         }
-        if (intent.getAction().equals(ACTION_PAUSE_INTENT)) {
+        if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
             if (isPlaying()) {
-
                 player.setPlayWhenReady(false);
                 createPlayNotification();
             } else {
                 player.setPlayWhenReady(true);
                 createPauseNotification();
             }
-        } else if (intent.getAction().equals(ACTION_SEEK_TO_PREVIOUS_INTENT)) {
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
             player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(ACTION_SEEK_TO_FOWARD_INTENT)) {
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT)) {
             player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(ACTION_RESTART_ACTIVITY)) {
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
             intent.setAction(PlayerActivity.ACTION_VIEW);
             Log.d(TAG, "back to playback into activity");
             intent.setClass(this, PlayerActivity.class);//fixme 実装が適当すぎる。resumePosition及びurlをfieldで管理するべき
             long currentPosition = 0;
-            if (player != null) { //null判定しているので、いらない。
-                currentPosition = player.getCurrentPosition();
-            }
+            currentPosition = player.getCurrentPosition();
             intent.putExtra(PlayerActivity.CURRENT_POSITION_FOR_RESUME, currentPosition);
             startActivity(intent);
+            releasePlayerAndStopService();
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_DELETE_PLAYER)) {
+            releasePlayerAndStopService();
         }
 
+    }
+
+    private void releasePlayerAndStopService() {
+        releasePlayer();
+        stopSelf();
+    }
+
+    private void releasePlayer() {
+        if (player != null) {
+            player.release();
+        }
+        player = null;
     }
 
     @Override
@@ -318,6 +326,7 @@ public class PlayerService extends Service {
         builder.setContentTitle("TITLE iS XX");
         builder.setContentText("Text is XX");
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
