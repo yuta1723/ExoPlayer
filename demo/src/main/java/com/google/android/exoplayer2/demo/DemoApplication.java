@@ -16,6 +16,9 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Application;
+
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -29,6 +32,7 @@ import com.google.android.exoplayer2.util.Util;
 public class DemoApplication extends Application {
 
   protected String userAgent;
+  private SimpleExoPlayer mPlayer;
 
   @Override
   public void onCreate() {
@@ -47,6 +51,14 @@ public class DemoApplication extends Application {
 
   public boolean useExtensionRenderers() {
     return BuildConfig.FLAVOR.equals("withExtensions");
+  }
+
+  public void setPlayerInstance (SimpleExoPlayer player) {
+    mPlayer = player;
+  }
+
+  public SimpleExoPlayer getPlayerInstance () {
+      return mPlayer;
   }
 
 }

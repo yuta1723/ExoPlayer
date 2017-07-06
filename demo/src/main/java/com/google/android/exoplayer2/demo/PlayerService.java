@@ -88,6 +88,8 @@ public class PlayerService extends Service {
 
     private String thumnailUrl = "http://54.248.249.96/hama3/meta/bigbuckbunny.jpg";
 
+    private DemoApplication demoApplication;
+
 
     public class LocalBinder extends Binder {
         //Serviceの取得
@@ -115,6 +117,8 @@ public class PlayerService extends Service {
         Log.d(TAG, "onCreate");
         super.onCreate();
         mediaDataSourceFactory = buildDataSourceFactory(true);
+
+        demoApplication = (DemoApplication) getApplication();
 
 
         IntentFilter commandFilter = new IntentFilter();
@@ -155,12 +159,19 @@ public class PlayerService extends Service {
         } else if (intent.getAction().equals(PlayerUtil.ACTION_DELETE_PLAYER)) {
             releasePlayerAndStopService();
         }
-
     }
 
     private void releasePlayerAndStopService() {
+        setPlayerInstance();
         releasePlayer();
         stopSelf();
+    }
+
+    private void setPlayerInstance() {
+        if (player == null) {
+            return;
+        }
+        demoApplication.setPlayerInstance(player);
     }
 
     private void releasePlayer() {
@@ -169,6 +180,10 @@ public class PlayerService extends Service {
         }
         player = null;
     }
+//
+//    public static long getResumePositon() {
+//        return player.getCurrentPosition();
+//    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -187,7 +202,8 @@ public class PlayerService extends Service {
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
         updateResumePositionForIntent(intent);
-        createPlayerInstance(intent);
+        getPlayerInstance();
+//        createPlayerInstance(intent);
         getAudioFocus();
         return mBinder;
     }
@@ -209,7 +225,8 @@ public class PlayerService extends Service {
     public void onRebind(Intent intent) {
         Log.d(TAG, "onRebind");
         updateResumePositionForIntent(intent);
-        createPlayerInstance(intent);
+        getPlayerInstance();
+//        createPlayerInstance(intent);
         getAudioFocus();
     }
 
@@ -287,6 +304,14 @@ public class PlayerService extends Service {
         }
         player.prepare(mediaSource, false, false);
         player.setPlayWhenReady(true);
+        createPauseNotification();
+    }
+
+    private void getPlayerInstance() {
+//        player = PlayerActivity.getPlayerActivityInstance().getPlayer();
+        player = demoApplication.getPlayerInstance();
+        Log.d(TAG, "" + player.getCurrentPosition());
+        mainHandler = new Handler();
         createPauseNotification();
     }
 
@@ -447,3 +472,4 @@ public class PlayerService extends Service {
 //todo 通知領域に表示されているplay/pauseを切り替え
 //todo ボタンに変化
 //todo plaerインスタンスをやりとりする処理を追加(playerインスタンスのやりとりを行わないと、live , dvrなどのresumeが行い辛くなる。)
+//todo application class 内にplayerをsetする方法が失敗すると思ったが、違うのか?

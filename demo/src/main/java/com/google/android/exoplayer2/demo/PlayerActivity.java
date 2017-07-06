@@ -126,6 +126,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private int resumeWindow;
   private long resumePosition;
   private Intent intent;
+  private DemoApplication demoApplication;
+
+  private static PlayerActivity playerActivityInstance;
 
   private ServiceConnection mConnection = new ServiceConnection() {
     PlayerService mBindService;
@@ -153,6 +156,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onCreate(Bundle savedInstanceState) {
     Log.d(TAG,"onCreate");
     super.onCreate(savedInstanceState);
+    demoApplication = (DemoApplication) this.getApplication();
     shouldAutoPlay = true;
     clearResumePosition();
     mediaDataSourceFactory = buildDataSourceFactory(true);
@@ -198,13 +202,19 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   }
 
   @Override
+  protected void onRestart() {
+    Log.d(TAG, "onRestart()");
+    super.onRestart();
+    stopBackgroundService();
+  }
+
+  @Override
   public void onResume() {
     Log.d(TAG, "onResume()");
     super.onResume();
     if ((Util.SDK_INT <= 23 || player == null)) {
       initializePlayer();
     }
-    stopBackgroundService();
   }
 
   @Override
@@ -213,8 +223,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     super.onPause();
     if (Util.SDK_INT <= 23) {
 //      releasePlayer();
+//      playerActivityInstance = (PlayerActivity) this;
+      demoApplication.setPlayerInstance(player);
       startBackgroundService();
-      releasePlayer();
+//      releasePlayer();
     }
   }
 
@@ -224,8 +236,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     super.onStop();
     if (Util.SDK_INT > 23) {
 //      releasePlayer();
+      demoApplication.setPlayerInstance(player);
+//      playerActivityInstance = (PlayerActivity) this;
       startBackgroundService();
-      releasePlayer();
+//      releasePlayer();
     }
   }
 
@@ -233,7 +247,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   protected void onDestroy() {
     Log.d(TAG, "onDestroy()");
     super.onDestroy();
-    stopBackgroundService();
+//    stopBackgroundService();
   }
 
   @Override
@@ -653,6 +667,14 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       cause = cause.getCause();
     }
     return false;
+  }
+
+  public static PlayerActivity getPlayerActivityInstance () {
+    return playerActivityInstance;
+  }
+
+  public SimpleExoPlayer getPlayer () {
+    return player;
   }
 
 }
