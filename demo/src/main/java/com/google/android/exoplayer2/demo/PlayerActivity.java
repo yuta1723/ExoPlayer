@@ -16,13 +16,20 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.session.MediaSession;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -127,6 +134,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private long resumePosition;
   private Intent intent;
 
+  private static int NOTIFICATION_ID = 10000;
+
+
   private ServiceConnection mConnection = new ServiceConnection() {
     PlayerService mBindService;
     public void onServiceConnected(ComponentName className, IBinder service) {
@@ -212,9 +222,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     Log.d(TAG, "onPause()");
     super.onPause();
     if (Util.SDK_INT <= 23) {
+      createPlayNotification();
 //      releasePlayer();
-      startBackgroundService();
-      releasePlayer();
+//      startBackgroundService();
+//      releasePlayer();
     }
   }
 
@@ -223,9 +234,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     Log.d(TAG, "onStop()");
     super.onStop();
     if (Util.SDK_INT > 23) {
+      createPlayNotification();
 //      releasePlayer();
-      startBackgroundService();
-      releasePlayer();
+//      startBackgroundService();
+//      releasePlayer();
     }
   }
 
@@ -234,6 +246,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     Log.d(TAG, "onDestroy()");
     super.onDestroy();
     stopBackgroundService();
+    releasePlayer();
   }
 
   @Override
@@ -653,6 +666,37 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       cause = cause.getCause();
     }
     return false;
+  }
+
+  private void createPlayNotification() {
+    Notification.Builder builder = new Notification.Builder(this);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      builder.setColor(Color.RED);
+    }
+    builder.setSmallIcon(R.mipmap.ic_launcher);
+    Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
+    builder.setLargeIcon(bmp1);
+    builder.setContentTitle("TITLE iS XX");
+    builder.setContentText("Text is XX");
+    builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+    builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
+    builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+    builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+    builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
+      builder.setStyle(new Notification.MediaStyle()
+              .setMediaSession(mediaSession.getSessionToken())
+              .setShowActionsInCompactView(1));
+    }
+    NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+    manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
+  }
+
+
+  private PendingIntent getPendingIntentWithBroadcast(String action) {
+    return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
   }
 
 }
