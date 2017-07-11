@@ -16,7 +16,6 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -89,7 +88,6 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -98,6 +96,8 @@ import java.util.UUID;
  */
 public class PlayerActivity extends Activity implements OnClickListener, ExoPlayer.EventListener,
         PlaybackControlView.VisibilityListener {
+
+    private String TAG = PlayerActivity.class.getSimpleName();
 
     public static final String DRM_SCHEME_UUID_EXTRA = "drm_scheme_uuid";
     public static final String DRM_LICENSE_URL = "drm_license_url";
@@ -140,7 +140,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private int resumeWindow;
     private long resumePosition;
     private Intent intent;
-    boolean restart = false;
+    private IntentFilter commandFilter;
 
     private static int NOTIFICATION_ID = 10000;
 
@@ -165,9 +165,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             mBindService = null;
         }
     };
-
-    private boolean isBackground = false;
-    private String TAG = PlayerActivity.class.getSimpleName();
 
     // Activity lifecycle
 
@@ -194,22 +191,21 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
         simpleExoPlayerView.setControllerVisibilityListener(this);
         simpleExoPlayerView.requestFocus();
+
+        if (commandFilter == null) {
+            commandFilter = new IntentFilter();
+            commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
+            commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
+            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
+            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
+        }
     }
 
     @Override
     public void onNewIntent(Intent intent) {
         Log.d(TAG, "onNewIntent");
         shouldAutoPlay = true;
-        restart = isPushedNotification(intent);
         setIntent(intent);
-        //todo 以下いる?
-//    if (intent.getLongExtra(CURRENT_POSITION_FOR_RESUME,0) != 0) {
-//      resumePosition = intent.getLongExtra(CURRENT_POSITION_FOR_RESUME, 0);
-//    } else {
-//      clearResumePosition();
-//    }
-
-//    stopBackgroundService();//通知を押下することで、stopBackgroundService()が2回呼ばれてる
     }
 
     @Override
@@ -218,9 +214,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         super.onStart();
         if (Util.SDK_INT > 23) {
             //todo background からの復帰処理を追加
-            if (!restart) {
-                initializePlayer();
-            }
+            initializePlayer();
         }
     }
 
@@ -230,9 +224,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         super.onResume();
         if ((Util.SDK_INT <= 23 || player == null)) {
             //todo background からの復帰処理を追加
-            if (!restart) {
-                initializePlayer();
-            }
+            initializePlayer();
         }
 //    stopBackgroundService();
     }
@@ -249,20 +241,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onPause()");
         super.onPause();
         if (Util.SDK_INT <= 23) {
-            createPauseNotification();
-
-
-            IntentFilter commandFilter = new IntentFilter();
-            commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
-            commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
-
-
-            registerReceiver(mIntentReceiver, commandFilter);
-//      releasePlayer();
-//      startBackgroundService();
-//      releasePlayer();
+            createControlerNotification(false);
+//            releasePlayer();
         }
     }
 
@@ -271,18 +251,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onStop()");
         super.onStop();
         if (Util.SDK_INT > 23) {
-            createPauseNotification();
-
-            IntentFilter commandFilter = new IntentFilter();
-            commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
-            commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
-
+            createControlerNotification(false);
             registerReceiver(mIntentReceiver, commandFilter);
-//      releasePlayer();
-//      startBackgroundService();
-//      releasePlayer();
+//            releasePlayer();
+
         }
     }
 
@@ -291,7 +263,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
         goneNotification();
-//    stopBackgroundService();
         releasePlayer();
     }
 
@@ -490,44 +461,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
-    private void startBackgroundService() {
-        Log.d(TAG, "startBackgroundService");
-        long currentPosition = 0;
-        isBackground = true;
-        if (player != null) {
-            currentPosition = player.getCurrentPosition();
-        }
-        bindService(buildServiceIntent(this, currentPosition), mConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    private void stopBackgroundService() {
-        Log.d(TAG, "stopBackgroundService");
-        if (isBackground) {
-            unbindService(mConnection);
-            isBackground = false;
-
-        }
-    }
-
     private void goneNotification() {
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.cancel(NOTIFICATION_ID);
-    }
-
-    public final boolean preferExtensionDecoders = false; //todo 実装する?
-
-    public Intent buildServiceIntent(Context context, long currentPosition) {
-//    Intent intent = new Intent(context, PlayerService.class);
-        intent.setClass(context, PlayerService.class);
-//    intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
-        intent.putExtra(CURRENT_POSITION_FOR_RESUME, currentPosition);
-        Log.d(TAG, "currentPosition : " + currentPosition);
-//    if (drmSchemeUuid != null) {
-//      intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
-//      intent.putExtra(PlayerActivity.DRM_LICENSE_URL, drmLicenseUrl);
-//      intent.putExtra(PlayerActivity.DRM_KEY_REQUEST_PROPERTIES, drmKeyRequestProperties);
-//    }
-        return intent;
     }
 
     private void updateResumePosition() {
@@ -719,7 +655,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return false;
     }
 
-    private void createPlayNotification() {
+    private void createControlerNotification(boolean isplay) {
         Notification.Builder builder = new Notification.Builder(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             builder.setColor(Color.RED);
@@ -732,32 +668,11 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
         builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
-        builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
-        builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
-            builder.setStyle(new Notification.MediaStyle()
-                    .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(1));
+        if (isplay) {
+            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+        } else {
+            builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
         }
-        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
-    }
-
-    private void createPauseNotification() {
-        Notification.Builder builder = new Notification.Builder(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder.setColor(Color.RED);
-        }
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
-        builder.setLargeIcon(bmp1);
-        builder.setContentTitle("TITLE iS XX");
-        builder.setContentText("Text is XX");
-        builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
-        builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
-        builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -773,33 +688,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
         return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
-    }
-
-    private void checkIntent(Intent intent) {
-        if (intent == null || player == null) {
-            return;
-        }
-        if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
-            if (isPlaying()) {
-                player.setPlayWhenReady(false);
-                createPlayNotification();
-            } else {
-                player.setPlayWhenReady(true);
-                createPauseNotification();
-            }
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
-            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT)) {
-            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
-            Log.d(TAG, "back to playback into activity");
-            Intent i = new Intent(this, PlayerActivity.class);
-            i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
-            startActivity(i);
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_DELETE_PLAYER)) {
-            releasePlayer();
-            finish();
-        }
     }
 
     private boolean isPushedNotification(Intent intent) {
@@ -832,10 +720,35 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive : intent " + intent + " context : " + context);
-            String action = intent.getAction();
-            String cmd = intent.getStringExtra("command");
             checkIntent(intent);
         }
     };
+
+    private void checkIntent(Intent intent) {
+        if (intent == null || player == null) {
+            return;
+        }
+        if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
+            if (isPlaying()) {
+                player.setPlayWhenReady(false);
+                createControlerNotification(true);
+            } else {
+                player.setPlayWhenReady(true);
+                createControlerNotification(false);
+            }
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
+            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT)) {
+            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
+            Log.d(TAG, "back to playback into activity");
+            Intent i = new Intent(this, PlayerActivity.class);
+            i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
+            startActivity(i);
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_DELETE_PLAYER)) {
+            releasePlayer();
+            finish();
+        }
+    }
 
 }
