@@ -57,22 +57,6 @@ import java.util.UUID;
 public class SampleChooserActivity extends Activity {
 
   private static final String TAG = "SampleChooserActivity";
-
-  private ServiceConnection mConnection = new ServiceConnection() {
-    PlayerService mBindService;
-    public void onServiceConnected(ComponentName className, IBinder service) {
-      // Serviceとの接続確立時に呼び出される。
-      // service引数には、Onbind()で返却したBinderが渡される
-      mBindService = ((PlayerService.LocalBinder)service).getService();
-      //必要であればmBoundServiceを使ってバインドしたServiceへの制御を行う
-    }
-
-    public void onServiceDisconnected(ComponentName className) {
-      // Serviceとの切断時に呼び出される。
-      mBindService = null;
-    }
-  };
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -121,8 +105,6 @@ public class SampleChooserActivity extends Activity {
   }
 
   private void onSampleSelected(Sample sample) {
-//    startService(sample.buildServiceIntent(this));
-//    bindService(sample.buildServiceIntent(this),mConnection,Context.BIND_AUTO_CREATE);
     startActivity(sample.buildIntent(this));
   }
 
@@ -423,17 +405,6 @@ public class SampleChooserActivity extends Activity {
 
     public Intent buildIntent(Context context) {
       Intent intent = new Intent(context, PlayerActivity.class);
-      intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
-      if (drmSchemeUuid != null) {
-        intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());
-        intent.putExtra(PlayerActivity.DRM_LICENSE_URL, drmLicenseUrl);
-        intent.putExtra(PlayerActivity.DRM_KEY_REQUEST_PROPERTIES, drmKeyRequestProperties);
-      }
-      return intent;
-    }
-
-    public Intent buildServiceIntent(Context context) {
-      Intent intent = new Intent(context, PlayerService.class);
       intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS, preferExtensionDecoders);
       if (drmSchemeUuid != null) {
         intent.putExtra(PlayerActivity.DRM_SCHEME_UUID_EXTRA, drmSchemeUuid.toString());

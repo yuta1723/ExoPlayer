@@ -147,25 +147,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
     private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
-
-    private ServiceConnection mConnection = new ServiceConnection() {
-        PlayerService mBindService;
-
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            Log.d(TAG, "onServiceConnected");
-            // Serviceとの接続確立時に呼び出される。
-            // service引数には、Onbind()で返却したBinderが渡される
-            mBindService = ((PlayerService.LocalBinder) service).getService();
-            //必要であればmBoundServiceを使ってバインドしたServiceへの制御を行う
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            Log.d(TAG, "onServiceConnected");
-            // Serviceとの切断時に呼び出される。
-            mBindService = null;
-        }
-    };
-
     // Activity lifecycle
 
     @Override
