@@ -20,11 +20,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -34,7 +32,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -671,18 +668,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
     }
 
-    private boolean isPushedNotification(Intent intent) {
-        if (intent == null || player == null) {
-            return false;
-        }
-        if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
-            return true;
-        }
-        return false;
-    }
-
     public boolean isPlaying() {
-        //Log.enter(TAG, "isPlaying", "");
         if (player == null) {
             return false;
         }
