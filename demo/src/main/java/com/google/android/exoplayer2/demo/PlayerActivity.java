@@ -177,8 +177,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
+            commandFilter.addAction(PlayerUtil.ACTION_DELETE_PLAYER);
         }
-        createAudioFocus();
     }
 
     @Override
@@ -206,6 +206,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             //todo background からの復帰処理を追加
             initializePlayer();
         }
+        createAudioFocus();
 //    stopBackgroundService();
     }
 
@@ -709,6 +710,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 player.setPlayWhenReady(false);
             } else {
                 player.setPlayWhenReady(true);
+                createAudioFocus();
             }
             createNotification();
         } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
@@ -734,9 +736,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             @Override
             public void onAudioFocusChange(int focusChange) {
                 Log.d(TAG, "onAudioFocusChange");
-                if (player == null) {
-                    return;
-                }
                 switch (focusChange) {
                     case AudioManager.AUDIOFOCUS_LOSS:
                         Log.d(TAG, "AUDIOFOCUS_LOSS");
@@ -758,16 +757,17 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             }
 
             private void audioFocusLoss() {
-                //playerのリリースをしない。
-                if (isPlaying()) {
-                    Log.d(TAG, "play stop");
-                    player.setPlayWhenReady(false);
+                if (player == null) {
+                    return;
                 }
-                player.release();
-                player = null;
+                player.setPlayWhenReady(false);
+                createNotification();
             }
 
             private void audioFocusGain() {
+                if (player == null) {
+                    return;
+                }
                 if (isTransient) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(true);
@@ -778,6 +778,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
             private void audioFocusLossTransmit() {
                 isTransient = true;
+                if (player == null) {
+                    return;
+                }
                 if (isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(false);
@@ -790,6 +793,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
-
-
+    // todo play pauseのたびに、AudioFocusを取得しないといけない。
+    //todo 通知削除でも消えない通知を作成する必要がある
 }
