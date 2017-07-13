@@ -91,7 +91,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
   public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
   public static final String CURRENT_POSITION_FOR_RESUME = "currentPosition_for_resume";
-  public static final String CURRENT_PLAYING_CONTENT_URL = "current_content_url";
 
   public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
   public static final String EXTENSION_EXTRA = "extension";
@@ -127,8 +126,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private long resumePosition;
   private Intent intent;
   private DemoApplication demoApplication;
-
-  private static PlayerActivity playerActivityInstance;
 
   private ServiceConnection mConnection = new ServiceConnection() {
     PlayerService mBindService;
@@ -223,7 +220,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     super.onPause();
     if (Util.SDK_INT <= 23) {
 //      releasePlayer();
-//      playerActivityInstance = (PlayerActivity) this;
       demoApplication.setPlayerInstance(player);
       startBackgroundService();
 //      releasePlayer();
@@ -237,7 +233,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     if (Util.SDK_INT > 23) {
 //      releasePlayer();
       demoApplication.setPlayerInstance(player);
-//      playerActivityInstance = (PlayerActivity) this;
       startBackgroundService();
 //      releasePlayer();
     }
@@ -667,14 +662,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       cause = cause.getCause();
     }
     return false;
-  }
-
-  public static PlayerActivity getPlayerActivityInstance () {
-    return playerActivityInstance;
-  }
-
-  public SimpleExoPlayer getPlayer () {
-    return player;
   }
 
 }
