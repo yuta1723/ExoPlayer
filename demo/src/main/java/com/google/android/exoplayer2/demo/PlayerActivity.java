@@ -221,7 +221,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onPause()");
         super.onPause();
         if (Util.SDK_INT <= 23) {
-            createControlerNotification(false);
+            createNotification();
 //            releasePlayer();
         }
     }
@@ -231,7 +231,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onStop()");
         super.onStop();
         if (Util.SDK_INT > 23) {
-            createControlerNotification(false);
+            createNotification();
             registerReceiver(mIntentReceiver, commandFilter);
 //            releasePlayer();
 
@@ -635,6 +635,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return false;
     }
 
+    private void createNotification() {
+        if (player == null) {
+            return;
+        }
+        createControlerNotification(isPlaying());
+    }
+
     private void createControlerNotification(boolean isplay) {
         Notification.Builder builder = new Notification.Builder(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -649,9 +656,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
-            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
-        } else {
             builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+        } else {
+            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
         }
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
@@ -700,11 +707,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
             if (isPlaying()) {
                 player.setPlayWhenReady(false);
-                createControlerNotification(true);
             } else {
                 player.setPlayWhenReady(true);
-                createControlerNotification(false);
             }
+            createNotification();
         } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
             player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
         } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT)) {
@@ -762,9 +768,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             }
 
             private void audioFocusGain() {
-                if (isTransient && isPlaying()) {
+                if (isTransient) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(true);
+                    createNotification();
                 }
 
             }
@@ -774,6 +781,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(false);
+                    createNotification();
                 }
             }
 
