@@ -57,36 +57,13 @@ public class PlayerService extends Service {
     private String TAG = PlayerService.class.getSimpleName();
 
     private SimpleExoPlayer player;
-    private DefaultTrackSelector trackSelector;
     Handler mainHandler;
-    private EventLogger eventLogger;
-    private DataSource.Factory mediaDataSourceFactory;
-    private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
-    private Uri contentUrl = Uri.parse("http://54.248.249.96/maruyama/short.mp4");
-    private String contentExtention = "mp4";
     private long resumePosition;
-    private boolean haveResumePosition = false;
-
-    private int FLAG_PAUSE_INTENT = 100;
-    private int FLAG_SEEK_TO_PREVIOUS_INTENT = 101;
-    private int FLAG_SEEK_TO_FOWARD_INTENT = 102;
 
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
     private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
     private static int NOTIFICATION_ID = 10000;
-
-
-    public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
-    public static final String EXTENSION_EXTRA = "extension";
-
-    public static final String ACTION_VIEW_LIST =
-            "com.google.android.exoplayer.demo.action.VIEW_LIST";
-    public static final String URI_LIST_EXTRA = "uri_list";
-
-    public static final String EXTENSION_LIST_EXTRA = "extension_list";
-
-    private String thumnailUrl = "http://54.248.249.96/hama3/meta/bigbuckbunny.jpg";
 
     private DemoApplication demoApplication;
 
@@ -116,10 +93,8 @@ public class PlayerService extends Service {
     public void onCreate() {
         Log.d(TAG, "onCreate");
         super.onCreate();
-        mediaDataSourceFactory = buildDataSourceFactory(true);
 
         demoApplication = (DemoApplication) getApplication();
-
 
         IntentFilter commandFilter = new IntentFilter();
         commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
@@ -180,10 +155,6 @@ public class PlayerService extends Service {
         }
         player = null;
     }
-//
-//    public static long getResumePositon() {
-//        return player.getCurrentPosition();
-//    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -203,7 +174,6 @@ public class PlayerService extends Service {
         Log.d(TAG, "onBind");
         updateResumePositionForIntent(intent);
         getPlayerInstance();
-//        createPlayerInstance(intent);
         getAudioFocus();
         return mBinder;
     }
@@ -226,89 +196,10 @@ public class PlayerService extends Service {
         Log.d(TAG, "onRebind");
         updateResumePositionForIntent(intent);
         getPlayerInstance();
-//        createPlayerInstance(intent);
         getAudioFocus();
     }
 
-    private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
-        int type = Util.inferContentType(!TextUtils.isEmpty(overrideExtension) ? "." + overrideExtension
-                : uri.getLastPathSegment());
-        switch (type) {
-            case C.TYPE_SS:
-                return new SsMediaSource(uri, buildDataSourceFactory(false),
-                        new DefaultSsChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
-            case C.TYPE_DASH:
-                return new DashMediaSource(uri, buildDataSourceFactory(false),
-                        new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
-            case C.TYPE_HLS:
-                return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
-            case C.TYPE_OTHER:
-                return new ExtractorMediaSource(uri, mediaDataSourceFactory, new DefaultExtractorsFactory(),
-                        mainHandler, eventLogger);
-            default: {
-                throw new IllegalStateException("Unsupported type: " + type);
-            }
-        }
-    }
-
-    private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
-        return ((DemoApplication) getApplication())
-                .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
-    }
-
-    private void createPlayerInstance(Intent intent) {
-        mainHandler = new Handler();
-        eventLogger = new EventLogger(trackSelector);
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
-        trackSelector =
-                new DefaultTrackSelector(videoTrackSelectionFactory);
-
-// 2. Create the player
-        player =
-                ExoPlayerFactory.newSimpleInstance(getBaseContext(), trackSelector, new DefaultLoadControl());
-
-        String action = intent.getAction();
-        Uri[] uris;
-        String[] extensions;
-        if (ACTION_VIEW.equals(action)) {
-            uris = new Uri[]{intent.getData()};
-            extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
-        } else if (ACTION_VIEW_LIST.equals(action)) {
-            String[] uriStrings = intent.getStringArrayExtra(URI_LIST_EXTRA);
-            uris = new Uri[uriStrings.length];
-            for (int i = 0; i < uriStrings.length; i++) {
-                uris[i] = Uri.parse(uriStrings[i]);
-            }
-            extensions = intent.getStringArrayExtra(EXTENSION_LIST_EXTRA);
-            if (extensions == null) {
-                extensions = new String[uriStrings.length];
-            }
-        } else {
-//                showToast(getString(R.string.unexpected_intent_action, action));
-            return;
-        }
-
-        MediaSource[] mediaSources = new MediaSource[uris.length];
-        for (int i = 0; i < uris.length; i++) {
-            mediaSources[i] = buildMediaSource(uris[i], extensions[i]);
-        }
-        MediaSource mediaSource = mediaSources.length == 1 ? mediaSources[0]
-                : new ConcatenatingMediaSource(mediaSources);
-
-
-        boolean haveResumePosition = resumePosition != 0;
-
-        if (haveResumePosition) {
-            player.seekTo(0, resumePosition);
-        }
-        player.prepare(mediaSource, false, false);
-        player.setPlayWhenReady(true);
-        createPauseNotification();
-    }
-
     private void getPlayerInstance() {
-//        player = PlayerActivity.getPlayerActivityInstance().getPlayer();
         player = demoApplication.getPlayerInstance();
         Log.d(TAG, "" + player.getCurrentPosition());
         mainHandler = new Handler();
