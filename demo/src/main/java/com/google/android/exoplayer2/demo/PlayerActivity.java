@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
@@ -177,6 +178,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
         }
+        createAudioFocus();
     }
 
     @Override
@@ -717,5 +719,69 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             finish();
         }
     }
+
+    private void createAudioFocus() {
+        AudioManager am = (AudioManager) getSystemService(this.AUDIO_SERVICE);
+        am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+            boolean isTransient = false;
+
+            @Override
+            public void onAudioFocusChange(int focusChange) {
+                Log.d(TAG, "onAudioFocusChange");
+                if (player == null) {
+                    return;
+                }
+                switch (focusChange) {
+                    case AudioManager.AUDIOFOCUS_LOSS:
+                        Log.d(TAG, "AUDIOFOCUS_LOSS");
+                        audioFocusLoss();
+                        break;
+                    case AudioManager.AUDIOFOCUS_GAIN:
+                        Log.d(TAG, "AUDIOFOCUS_GAIN");
+                        audioFocusGain();
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                        audioFocusLossTransmit();
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                        audioFocusLossTransmitCanDuck();
+                        break;
+                }
+            }
+
+            private void audioFocusLoss() {
+                //playerのリリースをしない。
+                if (isPlaying()) {
+                    Log.d(TAG, "play stop");
+                    player.setPlayWhenReady(false);
+                }
+                player.release();
+                player = null;
+            }
+
+            private void audioFocusGain() {
+                if (isTransient && isPlaying()) {
+                    Log.d(TAG, "play stop");
+                    player.setPlayWhenReady(true);
+                }
+
+            }
+
+            private void audioFocusLossTransmit() {
+                isTransient = true;
+                if (isPlaying()) {
+                    Log.d(TAG, "play stop");
+                    player.setPlayWhenReady(false);
+                }
+            }
+
+            private void audioFocusLossTransmitCanDuck() {
+
+            }
+        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+
 
 }
