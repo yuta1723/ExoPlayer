@@ -206,7 +206,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             //todo background からの復帰処理を追加
             initializePlayer();
         }
-        createAudioFocus();
+        if (!isPlaying()) {
+            createAudioFocus();
+            //todo 調査 : 再生中にbackgroundからforegroundに遷移すると、一時停止してしまうから
+        }
 //    stopBackgroundService();
     }
 
@@ -715,7 +718,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 player.setPlayWhenReady(false);
             } else {
                 player.setPlayWhenReady(true);
-                createAudioFocus();
+//                createAudioFocus();
             }
             createNotification();
         } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
@@ -773,7 +776,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (player == null) {
                     return;
                 }
-                if (isTransient) {
+                if (isTransient && !isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(true);
                     createNotification();
