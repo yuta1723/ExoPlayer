@@ -243,8 +243,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     protected void onDestroy() {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
-        goneNotification();
-        releasePlayer();
+//        goneNotification();
+        unregisterReceiver(mIntentReceiver);
+        DemoApplication demoApplication = (DemoApplication) this.getApplication();
+        demoApplication.setPlayerInstance(player);
+        demoApplication.registAudioBroadcastReceiver();
+        demoApplication.registPlayerControllerBroadcastReceiver(commandFilter);
+//        releasePlayer();
     }
 
     @Override
