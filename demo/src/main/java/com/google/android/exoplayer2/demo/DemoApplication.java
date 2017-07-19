@@ -54,7 +54,7 @@ public class DemoApplication extends Application {
     @Override
     public void onTerminate() {
         super.onTerminate();
-        unregisterReceiver(receiver);
+
     }
 
     @Override
@@ -74,7 +74,7 @@ public class DemoApplication extends Application {
 
     protected String userAgent;
     private SimpleExoPlayer player;
-    private HeadSetPlugReceiver receiver;
+    private AudioNoisyReceiver receiver;
 
     @Override
     public void onCreate() {
@@ -104,13 +104,13 @@ public class DemoApplication extends Application {
     }
 
     public void registAudioBroadcastReceiver() {
-        receiver = new HeadSetPlugReceiver();
+        receiver = new AudioNoisyReceiver();
         registerReceiver(receiver, new IntentFilter(Intent.ACTION_HEADSET_PLUG));
         registerReceiver(receiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
     }
 
     public void registPlayerControllerBroadcastReceiver(IntentFilter filter) {
-        receiver = new HeadSetPlugReceiver();
+        receiver = new AudioNoisyReceiver();
         registerReceiver(mIntentReceiver, filter);
     }
 
@@ -119,27 +119,6 @@ public class DemoApplication extends Application {
             return;
         }
         player.setPlayWhenReady(false);
-    }
-
-    private class HeadSetPlugReceiver extends BroadcastReceiver {
-        private String TAG = HeadSetPlugReceiver.class.getSimpleName();
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
-//        int state = intent.getIntExtra("state", -1);
-//        if(state == 0) {
-//          Log.d(TAG,"ヘッドホンが抜けた(ACTION_HEADSET_PLUG)");
-//          pauseplayer();
-//        }
-            } else if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
-                Log.d(TAG, "ヘッドホンが抜けた(ACTION_AUDIO_BECOMING_NOISY)");
-                player.setPlayWhenReady(false);
-                pauseplayer();
-                createNotification();
-            }
-        }
     }
 
     private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
@@ -304,6 +283,11 @@ public class DemoApplication extends Application {
 
             }
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+
+    private void goneNotification() {
+        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        manager.cancel(NOTIFICATION_ID);
     }
 }
 
