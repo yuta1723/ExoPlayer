@@ -133,12 +133,12 @@ public class DemoApplication extends Application {
         if (intent == null || player == null) {
             return;
         }
-        if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
+        if (intent.getAction().equals(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT)) {
             if (isPlaying()) {
                 player.setPlayWhenReady(false);
             } else {
                 player.setPlayWhenReady(true);
-                createAudioFocus();
+//                createAudioFocus();
             }
             createNotification();
         } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
@@ -192,9 +192,9 @@ public class DemoApplication extends Application {
         builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
-            builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
-            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 

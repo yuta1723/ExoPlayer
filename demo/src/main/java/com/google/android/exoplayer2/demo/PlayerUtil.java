@@ -8,6 +8,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 
 public class PlayerUtil {
     private String TAG = PlayerUtil.class.getSimpleName();
+    public static final String ACTION_TOGGLE_PLAY_PAUSE_INTENT = "action_play_pause";
     public static final String ACTION_PAUSE_INTENT = "action_pause";
     public static final String ACTION_SEEK_TO_PREVIOUS_INTENT = "action_seek_to_previous";
     public static final String ACTION_SEEK_TO_FOWARD_INTENT = "action_seek_to_forward";

@@ -32,15 +32,16 @@ class AudioNoisyReceiver extends BroadcastReceiver {
         mContext = context;
         String action = intent.getAction();
         if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
-//        int state = intent.getIntExtra("state", -1);
-//        if(state == 0) {
-//          Log.d(TAG,"ヘッドホンが抜けた(ACTION_HEADSET_PLUG)");
-//          pauseplayer();
-//        }
+            Log.d(TAG,"ヘッドホンが抜けた(ACTION_HEADSET_PLUG)");
         } else if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
             Log.d(TAG, "ヘッドホンが抜けた(ACTION_AUDIO_BECOMING_NOISY)");
             DemoApplication demoApplication = (DemoApplication) context.getApplicationContext();
             player = demoApplication.getPlayerInstance();
+            if (player == null) {
+                //player == nullの時は、まだonDestroyまで遷移してない時なので
+                context.startActivity(createPlayerActivityIntent(context, PlayerUtil.ACTION_PAUSE_INTENT));
+                return;
+            }
             player.setPlayWhenReady(false);
             pauseplayer();
             createNotification();
@@ -90,9 +91,9 @@ class AudioNoisyReceiver extends BroadcastReceiver {
         builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
-            builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
-            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_play, "Play", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
         builder.addAction(R.drawable.exo_controls_fastforward, ">>", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
@@ -110,76 +111,7 @@ class AudioNoisyReceiver extends BroadcastReceiver {
         return PendingIntent.getBroadcast(mContext.getApplicationContext(), 0, new Intent(action), 0);
     }
 
-    private void releasePlayer() {
-        if (player != null) {
-            player.release();
-            player = null;
-        }
-    }
-
-    private void createAudioFocus() {
-        AudioManager am = (AudioManager) mContext.getSystemService(mContext.AUDIO_SERVICE);
-        am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-            boolean isTransient = false;
-
-            @Override
-            public void onAudioFocusChange(int focusChange) {
-                Log.d(TAG, "onAudioFocusChange");
-                switch (focusChange) {
-                    case AudioManager.AUDIOFOCUS_LOSS:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS");
-                        audioFocusLoss();
-                        break;
-                    case AudioManager.AUDIOFOCUS_GAIN:
-                        Log.d(TAG, "AUDIOFOCUS_GAIN");
-                        audioFocusGain();
-                        break;
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
-                        audioFocusLossTransmit();
-                        break;
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
-                        audioFocusLossTransmitCanDuck();
-                        break;
-                }
-            }
-
-            private void audioFocusLoss() {
-                if (player == null) {
-                    return;
-                }
-                player.setPlayWhenReady(false);
-                createNotification();
-            }
-
-            private void audioFocusGain() {
-                if (player == null) {
-                    return;
-                }
-                if (isTransient) {
-                    Log.d(TAG, "play stop");
-                    player.setPlayWhenReady(true);
-                    createNotification();
-                }
-
-            }
-
-            private void audioFocusLossTransmit() {
-                isTransient = true;
-                if (player == null) {
-                    return;
-                }
-                if (isPlaying()) {
-                    Log.d(TAG, "play stop");
-                    player.setPlayWhenReady(false);
-                    createNotification();
-                }
-            }
-
-            private void audioFocusLossTransmitCanDuck() {
-
-            }
-        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    private Intent createPlayerActivityIntent(Context context, String action) {
+        return new Intent(context,PlayerActivity.class).setAction(action).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }
 }
