@@ -73,7 +73,7 @@ public class DemoApplication extends Application {
     }
 
     protected String userAgent;
-    private SimpleExoPlayer player;
+    private SimpleExoPlayer player = null;
     private AudioNoisyReceiver receiver;
 
     @Override

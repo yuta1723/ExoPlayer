@@ -182,6 +182,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_DELETE_PLAYER);
         }
+        DemoApplication demoApplication = (DemoApplication) getApplicationContext();
+        if (demoApplication.getPlayerInstance() != null) {
+            player = demoApplication.getPlayerInstance();
+        }
     }
 
     @Override
@@ -203,6 +207,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (Util.SDK_INT > 23 && player == null) {
             //todo background からの復帰処理を追加
             initializePlayer();
+        } else if (Util.SDK_INT > 23 && player != null) {
+            Log.d(TAG,"setPlayerInstance to simpleExoPlayerView");
+            simpleExoPlayerView.setPlayer(player);
         }
     }
 
@@ -210,9 +217,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
-        if ((Util.SDK_INT <= 23 && player == null)) {
+        if (Util.SDK_INT <= 23 && player == null) {
             //todo background からの復帰処理を追加
             initializePlayer();
+        } else if (Util.SDK_INT <= 23 && player != null) {
+            Log.d(TAG,"setPlayerInstance to simpleExoPlayerView");
+            simpleExoPlayerView.setPlayer(player);
         }
         if (!isPlaying()) {
             createAudioFocus();
