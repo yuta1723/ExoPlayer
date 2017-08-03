@@ -105,6 +105,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public static final String CURRENT_PLAYING_CONTENT_URL = "current_content_url";
 
     public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
+    public static final String ACTION_BROWSER_VIEW = "android.intent.action.VIEW";
     public static final String EXTENSION_EXTRA = "extension";
 
     public static final String ACTION_VIEW_LIST =
@@ -409,7 +410,15 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (extensions == null) {
                     extensions = new String[uriStrings.length];
                 }
+            } else if (ACTION_BROWSER_VIEW.equals(action)) {
+                uris = new Uri[]{intent.getData()};
+                Log.d(TAG,"uri" + uris[0]);
+
+                uris[0] = Uri.parse(uris[0].toString().replace("exoplayer","http"));
+                Log.d(TAG,"uri" + uris[0]);
+                extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
             } else {
+                Log.d(TAG,"action : " + action);
                 showToast(getString(R.string.unexpected_intent_action, action));
                 return;
             }

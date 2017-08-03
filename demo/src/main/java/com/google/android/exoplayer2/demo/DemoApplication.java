@@ -53,6 +53,7 @@ public class DemoApplication extends Application {
 
     @Override
     public void onTerminate() {
+        Log.d(TAG,"");
         super.onTerminate();
 
     }
@@ -80,6 +81,7 @@ public class DemoApplication extends Application {
     public void onCreate() {
         super.onCreate();
         userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
+        Log.d(TAG,"onCreate");
     }
 
     public DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
