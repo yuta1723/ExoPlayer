@@ -243,6 +243,11 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onPause() {
         Log.d(TAG, "onPause()");
         super.onPause();
+
+//        android.os.Process.killProcess(android.os.Process.myPid());//これもtask一覧に残るが、アプリのインスタンスは破棄される
+//        this.finish();//これだとtask一覧に残る
+//        this.finishAndRemoveTask();//これだとtask一覧に残らないがAPI > 21
+
         if (Util.SDK_INT <= 23) {
             createNotification();
             registerReceiver(mIntentReceiver, commandFilter);
