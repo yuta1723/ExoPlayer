@@ -445,6 +445,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             playerNeedsSource = false;
             updateButtonVisibilities();
         }
+        mainHandler.postDelayed(r, 1000);
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
@@ -869,7 +870,23 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
-    //playerをシングルトンにして,manager classを作成してapplication classとactivityクラスで別のreceiverを登録しないような実装にしないといけない。
+    Runnable r = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG,"run!");
+            if (player != null) {
+                Log.d(TAG, "currentPosition : " + player.getCurrentPosition() +  " duration : " + player.getDuration());
+            }
+            Log.d(TAG,"this thread is mainThread " + isCurrent());
+            mainHandler.postDelayed(r,1000);
+        }
+    };
+
+    private boolean isCurrent(){
+        return Thread.currentThread().equals(getMainLooper().getThread());
+    }
+
+    //playerをシングルトンにして,manager classを作成してapplication clzassとactivityクラスで別のreceiverを登録しないような実装にしないといけない。
 
     // todo play pauseのたびに、AudioFocusを取得しないといけない。
     //todo 通知削除でも消えない通知を作成する必要がある
