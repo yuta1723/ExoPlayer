@@ -88,8 +88,8 @@ class AudioNoisyReceiver extends BroadcastReceiver {
         builder.setContentTitle("TITLE iS XX");
         builder.setContentText("Text is XX");
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
-        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
-        builder.addAction(R.drawable.exo_controls_previous, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+//        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
+        builder.addAction(R.drawable.exo_controls_rewind, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
             builder.addAction(R.drawable.exo_controls_pause, "Pause", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
@@ -104,7 +104,9 @@ class AudioNoisyReceiver extends BroadcastReceiver {
                     .setShowActionsInCompactView(1));
         }
         NotificationManager manager = (NotificationManager) mContext.getSystemService(mContext.getApplicationContext().NOTIFICATION_SERVICE);
-        manager.notify(NOTIFICATION_ID, builder.build());//todo generate random notification Id
+        Notification notification = builder.build();
+        notification.flags = Notification.FLAG_NO_CLEAR;
+        manager.notify(NOTIFICATION_ID, notification);//todo generate random notification Id
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
