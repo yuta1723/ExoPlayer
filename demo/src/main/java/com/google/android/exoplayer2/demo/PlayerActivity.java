@@ -141,6 +141,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private Intent intent;
     private IntentFilter commandFilter;
 
+    private AudioNoisyReceiver receiver;
+
     private static int NOTIFICATION_ID = 10000;
 
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
@@ -183,10 +185,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_DELETE_PLAYER);
         }
-        DemoApplication demoApplication = (DemoApplication) getApplicationContext();
-        if (demoApplication.getPlayerInstance() != null) {
-            player = demoApplication.getPlayerInstance();
-        }
     }
 
     @Override
@@ -194,10 +192,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Log.d(TAG, "onNewIntent");
         shouldAutoPlay = true;
         setIntent(intent);
-        if (!isCommandIntent(intent)) {
-            DemoApplication demoApplication = (DemoApplication) getApplicationContext();
-            player = demoApplication.getPlayerInstance();
+        if (!isCommandIntent(intent) && player != null) {
             simpleExoPlayerView.setPlayer(player);
+
         }
     }
 
@@ -205,38 +202,30 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onStart() {
         Log.d(TAG, "onStart()");
         super.onStart();
-        if (Util.SDK_INT > 23 && player == null) {
-            //todo background からの復帰処理を追加
-            initializePlayer();
-        } else if (Util.SDK_INT > 23 && player != null) {
-            Log.d(TAG,"setPlayerInstance to simpleExoPlayerView");
-            simpleExoPlayerView.setPlayer(player);
-        }
     }
 
     @Override
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
-        if (Util.SDK_INT <= 23 && player == null) {
+        goneNotification();
+        if (player == null) {
             //todo background からの復帰処理を追加
             initializePlayer();
-        } else if (Util.SDK_INT <= 23 && player != null) {
-            Log.d(TAG,"setPlayerInstance to simpleExoPlayerView");
-            simpleExoPlayerView.setPlayer(player);
+        } else {
+            Log.d(TAG, "setPlayerInstance to simpleExoPlayerView");
         }
         if (!isPlaying()) {
             createAudioFocus();
             //todo 調査 : 再生中にbackgroundからforegroundに遷移すると、一時停止してしまうから
         }
-//    stopBackgroundService();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
 //        unregisterReceiver(mIntentReceiver);
-        goneNotification();
+        simpleExoPlayerView.setPlayer(player);
     }
 
     @Override
@@ -248,46 +237,23 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 //        this.finish();//これだとtask一覧に残る
 //        this.finishAndRemoveTask();//これだとtask一覧に残らないがAPI > 21
 
-        if (Util.SDK_INT <= 23) {
-            createNotification();
-            registerReceiver(mIntentReceiver, commandFilter);
-            DemoApplication demoApplication = (DemoApplication) this.getApplication();
-            demoApplication.setPlayerInstance(player);
-            demoApplication.registPlayerControllerBroadcastReceiver(commandFilter);
-            if (mIntentReceiver != null) {
-                unregisterReceiver(mIntentReceiver);
-            }
-//            releasePlayer();
-        }
+        createNotification();
+        registerReceiver(mIntentReceiver, commandFilter);
     }
 
     @Override
     public void onStop() {
         Log.d(TAG, "onStop()");
         super.onStop();
-        if (Util.SDK_INT > 23) {
-            createNotification();
-            registerReceiver(mIntentReceiver, commandFilter);
-            DemoApplication demoApplication = (DemoApplication) this.getApplication();
-            demoApplication.setPlayerInstance(player);
-            demoApplication.registPlayerControllerBroadcastReceiver(commandFilter);
-            if (mIntentReceiver != null) {
-                unregisterReceiver(mIntentReceiver);
-            }
-//            releasePlayer();
-
-        }
     }
 
     @Override
     protected void onDestroy() {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
-//        goneNotification();
-        unregistAudioBroadcastReceiver();
-        DemoApplication demoApplication = (DemoApplication) this.getApplication();
-        demoApplication.registAudioBroadcastReceiver();
-//        releasePlayer();
+        goneNotification();
+        unregistBroadcastReceiver();
+        releasePlayer();
     }
 
     @Override
@@ -417,13 +383,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 }
             } else if (ACTION_BROWSER_VIEW.equals(action)) {
                 uris = new Uri[]{intent.getData()};
-                Log.d(TAG,"uri" + uris[0]);
+                Log.d(TAG, "uri" + uris[0]);
 
-                uris[0] = Uri.parse(uris[0].toString().replace("exoplayer","http"));
-                Log.d(TAG,"uri" + uris[0]);
+                uris[0] = Uri.parse(uris[0].toString().replace("exoplayer", "http"));
+                Log.d(TAG, "uri" + uris[0]);
                 extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
             } else {
-                Log.d(TAG,"action : " + action);
+                Log.d(TAG, "action : " + action);
                 showToast(getString(R.string.unexpected_intent_action, action));
                 return;
             }
@@ -858,7 +824,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
 
-    private AudioNoisyReceiver receiver;
+    private void unregistBroadcastReceiver() {
+        unregistAudioBroadcastReceiver();
+        unregistControllerBroadcastReceiver();
+    }
 
     public void registAudioBroadcastReceiver() {
         receiver = new AudioNoisyReceiver();
@@ -872,20 +841,55 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
+    private void unregistControllerBroadcastReceiver() {
+        if (mIntentReceiver != null) {
+            unregisterReceiver(mIntentReceiver);
+        }
+    }
+
     Runnable r = new Runnable() {
         @Override
         public void run() {
-            Log.d(TAG,"run!");
+            Log.d(TAG, "run!");
             if (player != null) {
-                Log.d(TAG, "currentPosition : " + player.getCurrentPosition() +  " duration : " + player.getDuration());
+                Log.d(TAG, "currentPosition : " + player.getCurrentPosition() + " duration : " + player.getDuration());
             }
-            Log.d(TAG,"this thread is mainThread " + isCurrent());
-            mainHandler.postDelayed(r,1000);
+            Log.d(TAG, "this thread is mainThread " + isCurrent());
+            mainHandler.postDelayed(r, 1000);
         }
     };
 
-    private boolean isCurrent(){
+    private boolean isCurrent() {
         return Thread.currentThread().equals(getMainLooper().getThread());
+    }
+
+    class AudioNoisyReceiver extends BroadcastReceiver {
+        private String TAG = AudioNoisyReceiver.class.getSimpleName();
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive");
+            String action = intent.getAction();
+            if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
+                Log.d(TAG, "ヘッドホンが抜けた(ACTION_HEADSET_PLUG)");
+            } else if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+                Log.d(TAG, "ヘッドホンが抜けた(ACTION_AUDIO_BECOMING_NOISY)");
+                if (player == null) {
+                    //player == nullの時は、まだonDestroyまで遷移してない時なので
+                    return;
+                }
+                player.setPlayWhenReady(false);
+                pauseplayer();
+                createNotification();
+            }
+        }
+
+        public void pauseplayer() {
+            if (player == null) {
+                return;
+            }
+            player.setPlayWhenReady(false);
+        }
     }
 
     //playerをシングルトンにして,manager classを作成してapplication clzassとactivityクラスで別のreceiverを登録しないような実装にしないといけない。
