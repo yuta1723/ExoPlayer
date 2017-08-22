@@ -36,6 +36,9 @@ public class NotificationReceiver extends BroadcastReceiver {
             case PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT:
                 context.startActivity(createPlayerActivityIntent(context, action));
                 break;
+            case PlayerUtil.ACTION_STOP_PLAYER:
+                context.startActivity(createPlayerActivityIntent(context, action));
+                break;
         }
     }
 

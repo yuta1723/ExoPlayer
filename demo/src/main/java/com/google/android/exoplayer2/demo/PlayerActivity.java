@@ -184,7 +184,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             commandFilter.addAction(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_DELETE_PLAYER);
+            commandFilter.addAction(PlayerUtil.ACTION_STOP_PLAYER);
         }
     }
 
@@ -675,16 +675,17 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
-        builder.setContentText("TEXT is XX");
+//        builder.setContentText("TEXT is XX");
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
 //        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
-        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+//        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
             builder.addAction(R.drawable.exo_controls_pause, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
             builder.addAction(R.drawable.exo_controls_play, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
-        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
+        builder.addAction(R.mipmap.uliza_ic_clear_white_36dp, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
+//        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
@@ -754,10 +755,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
             startActivity(i);
             flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_DELETE_PLAYER)) {
-            releasePlayer();
+        } else if (intent.getAction().equals(PlayerUtil.ACTION_STOP_PLAYER)) {
+            player.setPlayWhenReady(false);
+            goneNotification();
             finish();
-            flag = true;
         }
         return flag;
     }
