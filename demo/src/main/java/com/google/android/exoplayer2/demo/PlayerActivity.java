@@ -672,10 +672,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             builder.setColor(Color.RED);
         }
         builder.setSmallIcon(R.mipmap.ic_launcher);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.bigbuckbunny);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle("TITLE iS XX");
-        builder.setContentText("Text is XX");
+//        builder.setContentText("Text is XX");
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
 //        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
         builder.addAction(R.drawable.exo_controls_rewind, "<<", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
