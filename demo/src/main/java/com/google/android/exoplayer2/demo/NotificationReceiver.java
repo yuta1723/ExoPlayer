@@ -40,6 +40,6 @@ public class NotificationReceiver extends BroadcastReceiver {
     }
 
     private Intent createPlayerActivityIntent(Context context, String action) {
-        return new Intent(context,PlayerActivity.class).setAction(action).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return new Intent(context,PlayerActivity.class).setAction(action);
     }
 }
