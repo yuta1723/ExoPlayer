@@ -46,10 +46,6 @@ import com.google.android.exoplayer2.util.Util;
  */
 public class DemoApplication extends Application {
     private String TAG = DemoApplication.class.getSimpleName();
-    private static int NOTIFICATION_ID = 10000;
-
-    private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
-    private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
     @Override
     public void onTerminate() {

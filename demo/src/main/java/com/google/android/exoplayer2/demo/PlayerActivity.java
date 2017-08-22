@@ -101,8 +101,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public static final String DRM_LICENSE_URL = "drm_license_url";
     public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
     public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
-    public static final String CURRENT_POSITION_FOR_RESUME = "currentPosition_for_resume";
-    public static final String CURRENT_PLAYING_CONTENT_URL = "current_content_url";
 
     public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
     public static final String ACTION_BROWSER_VIEW = "android.intent.action.VIEW";
@@ -738,7 +736,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 player.setPlayWhenReady(false);
             } else {
                 player.setPlayWhenReady(true);
-//                createAudioFocus();
             }
             createNotification();
             flag = true;
