@@ -149,6 +149,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     private boolean FLAG_REGISTED_BROADCASTRECEIVER = false;
 
+    private boolean FLAG_PUSHED_CANSEL_BUTTON = false;
+
     // Activity lifecycle
 
     @Override
@@ -209,6 +211,15 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
+        if (FLAG_PUSHED_CANSEL_BUTTON) {
+            FLAG_PUSHED_CANSEL_BUTTON = false;
+            PackageManager packageManager = this.getPackageManager();
+            String packageName = this.getApplicationContext().getPackageName();
+            Intent intent = packageManager.getLaunchIntentForPackage(packageName);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            this.startActivity(intent);
+            finish();
+        }
         goneNotification();
         if (player == null) {
             //todo background からの復帰処理を追加
@@ -756,9 +767,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             startActivity(i);
             flag = true;
         } else if (intent.getAction().equals(PlayerUtil.ACTION_STOP_PLAYER)) {
+            FLAG_PUSHED_CANSEL_BUTTON = true;
             player.setPlayWhenReady(false);
             goneNotification();
-            finish();
         }
         return flag;
     }
