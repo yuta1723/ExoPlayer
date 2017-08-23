@@ -191,11 +191,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onNewIntent(Intent intent) {
         Log.d(TAG, "onNewIntent");
         shouldAutoPlay = true;
-//        setIntent(intent);
-//        if (!isCommandIntent(intent) && player != null) {
-//            simpleExoPlayerView.setPlayer(player);
-//
-//        }
     }
 
     @Override
@@ -263,7 +258,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 //        this.finishAndRemoveTask();//これだとtask一覧に残らないがAPI > 21
         if (FLAG_ENTER_BACKBUTTON) {
             FLAG_ENTER_BACKBUTTON = false;
-            createNotification();
+            startNotificationService();
             registerReceiver(mIntentReceiver, commandFilter);
         }
     }
@@ -675,14 +670,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return false;
     }
 
-    private void createNotification() {
+    private void startNotificationService() {
         if (player == null) {
             return;
         }
-        startNotificationService();
-    }
-
-    private void startNotificationService() {
         Log.d(TAG, "startNotificationService");
         FLAG_START_NOTIFICATION_SERVICE = true;
         bindService(new Intent(PlayerActivity.this, NotificationService.class), mConnection, Context.BIND_AUTO_CREATE);
@@ -730,7 +721,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-//            createNotification();
+//            startNotificationService();
             flag = true;
         } else if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
             player.setPlayWhenReady(false);
@@ -800,7 +791,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     return;
                 }
                 player.setPlayWhenReady(false);
-                createNotification();
+                startNotificationService();
             }
 
             private void audioFocusGain() {
@@ -810,7 +801,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (isTransient && !isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(true);
-                    createNotification();
+                    startNotificationService();
                 }
 
             }
@@ -823,7 +814,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(false);
-                    createNotification();
+                    startNotificationService();
                 }
             }
 
@@ -901,7 +892,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 }
                 player.setPlayWhenReady(false);
                 pauseplayer();
-                createNotification();
+                startNotificationService();
             }
         }
 

@@ -14,6 +14,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.support.annotation.Nullable;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -48,7 +50,6 @@ public class NotificationService extends Service {
                 case MSG_REMOVE_NOTIFICATION:
                     Toast.makeText(getApplicationContext(), "MSG_REMOVE_NOTIFICATION!", Toast.LENGTH_SHORT).show();
                     goneNotification();
-//                    stopSelf();
                     Log.d(TAG,"MSG_REMOVE_NOTIFICATION");
                     break;
                 default:
@@ -114,8 +115,8 @@ public class NotificationService extends Service {
         stopSelf();
     }
 
-    private void createControlerNotification(boolean isplay) {
-        Notification.Builder builder = new Notification.Builder(this);
+    private void createControlerNotification(boolean isPlaying) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 //            builder.setColor(Color.RED);
 //        }
@@ -127,7 +128,7 @@ public class NotificationService extends Service {
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
 //        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
 //        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
-        if (isplay) {
+        if (isPlaying) {
             builder.addAction(R.drawable.exo_controls_pause, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
             builder.addAction(R.drawable.exo_controls_play, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
@@ -136,8 +137,8 @@ public class NotificationService extends Service {
 //        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
-            builder.setStyle(new Notification.MediaStyle()
+            MediaSessionCompat mediaSession = new MediaSessionCompat(getApplicationContext(), "naito");
+            builder.setStyle(new NotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession.getSessionToken())
                     .setShowActionsInCompactView(0,1));
         }
