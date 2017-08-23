@@ -7,12 +7,15 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.session.MediaSession;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * Created by y.naito on 2017/08/23.
@@ -22,12 +25,46 @@ public class NotificationService extends Service {
     private String TAG = NotificationService.class.getSimpleName();
 
     private static int NOTIFICATION_ID = 10000;
+    static final int MSG_CHANGE_PLAY = 2;
+    static final int MSG_CHANGE_PAUSE = 3;
+    static final int MSG_REMOVE_NOTIFICATION = 4;
+
+
+
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_CHANGE_PLAY:
+                    Toast.makeText(getApplicationContext(), "MSG_CHANGE_PLAY!", Toast.LENGTH_SHORT).show();
+                    createControlerNotification(false);
+                    Log.d(TAG,"MSG_CHANGE_PLAY");
+                    break;
+                case MSG_CHANGE_PAUSE:
+                    Toast.makeText(getApplicationContext(), "MSG_CHANGE_PAUSE!", Toast.LENGTH_SHORT).show();
+                    createControlerNotification(true);
+                    Log.d(TAG,"MSG_CHANGE_PAUSE");
+                    break;
+                case MSG_REMOVE_NOTIFICATION:
+                    Toast.makeText(getApplicationContext(), "MSG_REMOVE_NOTIFICATION!", Toast.LENGTH_SHORT).show();
+                    goneNotification();
+//                    stopSelf();
+                    Log.d(TAG,"MSG_REMOVE_NOTIFICATION");
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         Log.d(TAG, "onBind");
-        return null;
+        return mMessenger.getBinder();
     }
 
     @Override
@@ -45,14 +82,14 @@ public class NotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
-            return super.onStartCommand(intent, flags, startId);
-        }
+//        if (intent == null) {
+//            return super.onStartCommand(intent, flags, startId);
+//        }
         Log.d(TAG, "onStartCommand Flag : " + flags + " intent : " + intent.getAction());
-        if (intent.getAction().equals(PlayerUtil.ACTION_CREATE_NOTIFICATION)) {
-            boolean isplaying = intent.getBooleanExtra("isplaying", false);
-            createControlerNotification(isplaying);
-        }
+//        if (intent.getAction().equals(PlayerUtil.ACTION_CREATE_NOTIFICATION)) {
+//            boolean isplaying = intent.getBooleanExtra("isplaying", false);
+//            createControlerNotification(isplaying);
+//        }
         return Service.START_NOT_STICKY;
     }
 
@@ -116,7 +153,8 @@ public class NotificationService extends Service {
     }
 
     private void goneNotification() {
-        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        manager.cancel(NOTIFICATION_ID);
+        stopForeground(true);
+//        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+//        manager.cancel(NOTIFICATION_ID);
     }
 }

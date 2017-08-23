@@ -17,14 +17,20 @@ package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -212,7 +218,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             finish();
         }
         if (FLAG_START_NOTIFICATION_SERVICE) {
-            stopNotificationService();
+            goneNotificationAndStopService();
         }
         if (player == null) {
             //todo background からの復帰処理を追加
@@ -226,10 +232,16 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
-    private void stopNotificationService() {
-        Log.d(TAG, "stopNotificationService");
+    private void goneNotificationAndStopService () {
+        Log.d(TAG, "goneNotificationAndStopService");
         FLAG_START_NOTIFICATION_SERVICE = false;
-        stopService(new Intent(PlayerActivity.this, NotificationService.class));
+        Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+        try {
+            mService.send(msg);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        unbindService(mConnection);
     }
 
     @Override
@@ -671,8 +683,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     }
 
     private void startNotificationService() {
+        Log.d(TAG, "startNotificationService");
         FLAG_START_NOTIFICATION_SERVICE = true;
-        startService(new Intent(PlayerActivity.this, NotificationService.class).setAction(PlayerUtil.ACTION_CREATE_NOTIFICATION).putExtra("isPlaying", isPlaying()));
+        bindService(new Intent(PlayerActivity.this, NotificationService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     public boolean isPlaying() {
@@ -704,12 +717,20 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
         boolean flag = false;
         if (intent.getAction().equals(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT)) {
+            Message msg = null;
             if (isPlaying()) {
                 player.setPlayWhenReady(false);
+                msg = Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0);
             } else {
                 player.setPlayWhenReady(true);
+                msg = Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0);
             }
-            createNotification();
+            try {
+                mService.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+//            createNotification();
             flag = true;
         } else if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
             player.setPlayWhenReady(false);
@@ -722,11 +743,24 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             flag = true;
         } else if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
             Log.d(TAG, "back to playback into activity");
+            Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+            try {
+                mService.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
             Intent i = new Intent(this, PlayerActivity.class);
             i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
             startActivity(i);
             flag = true;
         } else if (intent.getAction().equals(PlayerUtil.ACTION_STOP_PLAYER)) {
+            Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+            try {
+                mService.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            Log.d(TAG,"ACTION_STOP_PLAYER");
             FLAG_PUSHED_CANSEL_BUTTON = true;
             player.setPlayWhenReady(false);
         }
@@ -884,9 +918,49 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     //todo 通知削除でも消えない通知を作成する必要がある
 
     public void onUserLeaveHint() {
+        Log.d(TAG,"onUserLeaveHint");
         //ホームボタンが押された時や、他のアプリが起動した時に呼ばれる
         //戻るボタンが押された場合には呼ばれない
-        Toast.makeText(getApplicationContext(), "Good bye!", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), "Good bye!", Toast.LENGTH_SHORT).show();
         FLAG_ENTER_BACKBUTTON = true;
     }
+
+    /** Messenger for communicating with the service. */
+    Messenger mService = null;
+
+    /** Flag indicating whether we have called bind on the service. */
+    boolean mBound;
+
+    /**
+     * Class for interacting with the main interface of the service.
+     */
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            Log.d(TAG,"enter onServiceConnected");
+            // This is called when the connection with the service has been
+            // established, giving us the object we can use to
+            // interact with the service.  We are communicating with the
+            // service using a Messenger, so here we get a client-side
+            // representation of that from the raw IBinder object.
+            mService = new Messenger(service);
+            try {
+                if (isPlaying()) {
+                    mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
+                } else {
+                    mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            mBound = true;
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            Log.d(TAG,"enter onServiceDisconnected");
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            mService = null;
+            mBound = false;
+        }
+    };
 }
