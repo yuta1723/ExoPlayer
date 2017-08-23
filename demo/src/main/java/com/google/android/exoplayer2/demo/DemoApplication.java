@@ -85,7 +85,7 @@ public class DemoApplication extends Application {
     private static class ActivityLifeCycleListener implements ActivityLifecycleCallbacks {
         @Override
         public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            android.util.Log.e("yuki", "yuki call onCreated:" + activity);
+            android.util.Log.e("naito", "naito call onCreated:" + activity);
         }
 
         @Override
@@ -94,7 +94,7 @@ public class DemoApplication extends Application {
 
         @Override
         public void onActivityResumed(Activity activity) {
-            android.util.Log.e("yuki", "yuki call onResumed:" + activity);
+            android.util.Log.e("naito", "naito call onResumed:" + activity);
         }
 
         @Override
@@ -103,7 +103,7 @@ public class DemoApplication extends Application {
 
         @Override
         public void onActivityPaused(Activity activity) {
-            android.util.Log.e("yuki", "yuki call onPaused:" + activity);
+            android.util.Log.e("naito", "naito call onPaused:" + activity);
         }
 
         @Override
@@ -112,11 +112,7 @@ public class DemoApplication extends Application {
 
         @Override
         public void onActivityDestroyed(Activity activity) {
-            android.util.Log.e("yuki", "yuki call onDestroy:" + activity);
-            if (activity.getClass().getSimpleName().equals("com.google.android.exoplayer2.demo.PlayerActivity")) {
-                NotificationManager manager = (NotificationManager) activity.getSystemService(activity.getApplicationContext().NOTIFICATION_SERVICE);
-                manager.cancel(NOTIFICATION_ID);
-            }
+            android.util.Log.e("naito", "naito call onDestroy:" + activity);
         }
     }
 }
