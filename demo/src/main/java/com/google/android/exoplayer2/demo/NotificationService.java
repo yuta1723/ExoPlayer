@@ -53,7 +53,7 @@ public class NotificationService extends Service {
             boolean isplaying = intent.getBooleanExtra("isplaying", false);
             createControlerNotification(isplaying);
         }
-        return super.onStartCommand(intent, flags, startId);
+        return Service.START_NOT_STICKY;
     }
 
     @Override
@@ -120,7 +120,3 @@ public class NotificationService extends Service {
         manager.cancel(NOTIFICATION_ID);
     }
 }
-
-//プロセス削除を行なった場合に通知が消えない問題にまだ対応できていない、
-//AndroidStudioのAndroidDeviceMonitorを使用してプロセスを削除した場合、サービスが再起動して、onCreateのみが呼ばれるため、onCreateで処理をするべき?
-//また、常にserviceが動いているため、止める処理を行う必要がある。
