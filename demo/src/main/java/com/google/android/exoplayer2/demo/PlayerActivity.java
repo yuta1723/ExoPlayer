@@ -142,8 +142,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     private AudioNoisyReceiver receiver;
 
-    private static int NOTIFICATION_ID = 10000;
-
     private long SEEK_TO_PREVIOUS_DEFAULT_VALUE = 1500;
     private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
@@ -224,7 +222,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (FLAG_START_NOTIFICATION_SERVICE) {
             stopNotificationService();
         }
-        goneNotification();
         if (player == null) {
             //todo background からの復帰処理を追加
             initializePlayer();
@@ -277,7 +274,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     protected void onDestroy() {
         Log.d(TAG, "onDestroy()");
         super.onDestroy();
-        goneNotification();
         unregistBroadcastReceiver();
         releasePlayer();
     }
@@ -486,11 +482,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
-    private void goneNotification() {
-        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        manager.cancel(NOTIFICATION_ID);
-    }
-
     private void updateResumePosition() {
         resumeWindow = player.getCurrentWindowIndex();
         resumePosition = player.isCurrentWindowSeekable() ? Math.max(0, player.getCurrentPosition())
@@ -684,51 +675,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (player == null) {
             return;
         }
-        createControlerNotification(isPlaying());
         startNotificationService();
     }
 
     private void startNotificationService() {
         FLAG_START_NOTIFICATION_SERVICE = true;
-        startService(new Intent(PlayerActivity.this, NotificationService.class));
-    }
-
-    private void createControlerNotification(boolean isplay) {
-        Notification.Builder builder = new Notification.Builder(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder.setColor(Color.RED);
-        }
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-        builder.setLargeIcon(bmp1);
-        builder.setContentTitle("TITLE iS XX");
-//        builder.setContentText("TEXT is XX");
-        builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
-//        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
-        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
-        if (isplay) {
-            builder.addAction(R.drawable.exo_controls_pause, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
-        } else {
-            builder.addAction(R.drawable.exo_controls_play, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
-        }
-        builder.addAction(R.mipmap.uliza_ic_clear_white_36dp, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
-//        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            MediaSession mediaSession = new MediaSession(getApplicationContext(), "naito");
-            builder.setStyle(new Notification.MediaStyle()
-                    .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(1));
-        }
-        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        Notification notification = builder.build();
-        notification.flags = Notification.FLAG_NO_CLEAR;
-        manager.notify(NOTIFICATION_ID, notification);//todo generate random notification Id
-    }
-
-
-    private PendingIntent getPendingIntentWithBroadcast(String action) {
-        return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
+        startService(new Intent(PlayerActivity.this, NotificationService.class).putExtra("isPlaying", isPlaying()));
     }
 
     public boolean isPlaying() {
@@ -785,7 +737,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         } else if (intent.getAction().equals(PlayerUtil.ACTION_STOP_PLAYER)) {
             FLAG_PUSHED_CANSEL_BUTTON = true;
             player.setPlayWhenReady(false);
-            goneNotification();
         }
         return flag;
     }
