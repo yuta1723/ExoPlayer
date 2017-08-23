@@ -31,10 +31,28 @@ public class NotificationService extends Service {
     }
 
     @Override
+    public void onTrimMemory(int level) {
+        Log.d(TAG, "onTrimMemory level : " + level);
+        super.onTrimMemory(level);
+    }
+
+    @Override
+    public void onLowMemory() {
+        Log.d(TAG, "onStartConLowMemoryommand");
+        goneNotification();
+        super.onLowMemory();
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand Flag : " + flags);
-        boolean isplaying = intent.getBooleanExtra("isplaying",false);
-        createControlerNotification(isplaying);
+        if (intent == null) {
+            return super.onStartCommand(intent, flags, startId);
+        }
+        Log.d(TAG, "onStartCommand Flag : " + flags + " intent : " + intent.getAction());
+        if (intent.getAction().equals(PlayerUtil.ACTION_CREATE_NOTIFICATION)) {
+            boolean isplaying = intent.getBooleanExtra("isplaying", false);
+            createControlerNotification(isplaying);
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -89,7 +107,8 @@ public class NotificationService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         Notification notification = builder.build();
         notification.flags = Notification.FLAG_NO_CLEAR;
-        manager.notify(NOTIFICATION_ID, notification);//todo generate random notification Id
+//        manager.notify(NOTIFICATION_ID, notification);//todo generate random notification Id
+        startForeground(NOTIFICATION_ID, notification);
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
@@ -100,5 +119,8 @@ public class NotificationService extends Service {
         NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         manager.cancel(NOTIFICATION_ID);
     }
-
 }
+
+//プロセス削除を行なった場合に通知が消えない問題にまだ対応できていない、
+//AndroidStudioのAndroidDeviceMonitorを使用してプロセスを削除した場合、サービスが再起動して、onCreateのみが呼ばれるため、onCreateで処理をするべき?
+//また、常にserviceが動いているため、止める処理を行う必要がある。

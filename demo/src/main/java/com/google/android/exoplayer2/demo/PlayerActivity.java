@@ -16,21 +16,13 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.media.AudioManager;
-import android.media.session.MediaSession;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
@@ -680,7 +672,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     private void startNotificationService() {
         FLAG_START_NOTIFICATION_SERVICE = true;
-        startService(new Intent(PlayerActivity.this, NotificationService.class).putExtra("isPlaying", isPlaying()));
+        startService(new Intent(PlayerActivity.this, NotificationService.class).setAction(PlayerUtil.ACTION_CREATE_NOTIFICATION).putExtra("isPlaying", isPlaying()));
     }
 
     public boolean isPlaying() {
