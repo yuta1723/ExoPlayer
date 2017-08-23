@@ -15,25 +15,13 @@
  */
 package com.google.android.exoplayer2.demo;
 
+import android.app.Activity;
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.media.AudioManager;
-import android.media.session.MediaSession;
-import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -47,9 +35,11 @@ import com.google.android.exoplayer2.util.Util;
 public class DemoApplication extends Application {
     private String TAG = DemoApplication.class.getSimpleName();
 
+    private static int NOTIFICATION_ID = 10000;
+
     @Override
     public void onTerminate() {
-        Log.d(TAG,"");
+        Log.d(TAG, "");
         super.onTerminate();
 
     }
@@ -75,7 +65,8 @@ public class DemoApplication extends Application {
     public void onCreate() {
         super.onCreate();
         userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
-        Log.d(TAG,"onCreate");
+        registerActivityLifecycleCallbacks(new ActivityLifeCycleListener());
+
     }
 
     public DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
@@ -91,6 +82,43 @@ public class DemoApplication extends Application {
         return BuildConfig.FLAVOR.equals("withExtensions");
     }
 
+    private static class ActivityLifeCycleListener implements ActivityLifecycleCallbacks {
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+            android.util.Log.e("yuki", "yuki call onCreated:" + activity);
+        }
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+            android.util.Log.e("yuki", "yuki call onResumed:" + activity);
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+            android.util.Log.e("yuki", "yuki call onPaused:" + activity);
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+        }
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+            android.util.Log.e("yuki", "yuki call onDestroy:" + activity);
+            if (activity.getClass().getSimpleName().equals("com.google.android.exoplayer2.demo.PlayerActivity")) {
+                NotificationManager manager = (NotificationManager) activity.getSystemService(activity.getApplicationContext().NOTIFICATION_SERVICE);
+                manager.cancel(NOTIFICATION_ID);
+            }
+        }
+    }
 }
 
 

@@ -150,6 +150,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private boolean FLAG_REGISTED_BROADCASTRECEIVER = false;
 
     private boolean FLAG_PUSHED_CANSEL_BUTTON = false;
+    private boolean FLAG_START_NOTIFICATION_SERVICE = false;
 
     // Activity lifecycle
 
@@ -220,6 +221,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             this.startActivity(intent);
             finish();
         }
+        if (FLAG_START_NOTIFICATION_SERVICE) {
+            stopNotificationService();
+        }
         goneNotification();
         if (player == null) {
             //todo background からの復帰処理を追加
@@ -231,6 +235,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             createAudioFocus();
             //todo 調査 : 再生中にbackgroundからforegroundに遷移すると、一時停止してしまうから
         }
+    }
+
+    private void stopNotificationService() {
+        Log.d(TAG, "stopNotificationService");
+        FLAG_START_NOTIFICATION_SERVICE = false;
+        stopService(new Intent(PlayerActivity.this, NotificationService.class));
     }
 
     @Override
@@ -675,6 +685,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             return;
         }
         createControlerNotification(isPlaying());
+        startNotificationService();
+    }
+
+    private void startNotificationService() {
+        FLAG_START_NOTIFICATION_SERVICE = true;
+        startService(new Intent(PlayerActivity.this, NotificationService.class));
     }
 
     private void createControlerNotification(boolean isplay) {
@@ -689,7 +705,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 //        builder.setContentText("TEXT is XX");
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
 //        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
-//        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isplay) {
             builder.addAction(R.drawable.exo_controls_pause, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {

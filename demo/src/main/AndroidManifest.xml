@@ -95,6 +95,10 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="com.google.android.exoplayer2.demo.NotificationService"
+            android:exported="false" />
+
 
         <!--<service-->
         <!--android:name="com.google.android.exoplayer2.demo.PlayerService"-->
