@@ -791,7 +791,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     return;
                 }
                 player.setPlayWhenReady(false);
-                startNotificationService();
+                if (mService != null) {
+                    try {
+                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
 
             private void audioFocusGain() {
@@ -801,7 +807,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (isTransient && !isPlaying()) {
                     Log.d(TAG, "play stop");
                     player.setPlayWhenReady(true);
-                    startNotificationService();
+                    if (mService != null) {
+                        try {
+                            mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
             }
@@ -890,9 +902,14 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     //player == nullの時は、まだonDestroyまで遷移してない時なので
                     return;
                 }
-                player.setPlayWhenReady(false);
                 pauseplayer();
-                startNotificationService();
+                if (mService != null) {
+                    try {
+                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
 
