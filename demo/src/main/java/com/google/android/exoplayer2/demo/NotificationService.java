@@ -7,7 +7,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +24,9 @@ import android.widget.Toast;
 
 public class NotificationService extends Service {
     private String TAG = NotificationService.class.getSimpleName();
+
+    private String TITLE_NOTIFICATION = "BigBuckBunny";
+    private String TEXT_NOIFICATION = "を再生しています";
 
     private static int NOTIFICATION_ID = 10000;
     static final int MSG_CHANGE_PLAY = 2;
@@ -120,20 +122,21 @@ public class NotificationService extends Service {
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 //            builder.setColor(Color.RED);
 //        }
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        builder.setSmallIcon(R.drawable.ic_launcher);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
         builder.setLargeIcon(bmp1);
-        builder.setContentTitle("TITLE iS XX");
-//        builder.setContentText("TEXT is XX");
+        builder.setContentTitle(TITLE_NOTIFICATION);
+        builder.setContentText(TITLE_NOTIFICATION + TEXT_NOIFICATION);
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+        builder.setShowWhen(false);
 //        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
 //        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
         if (isPlaying) {
-            builder.addAction(R.drawable.exo_controls_pause, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_pause, "一時停止", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
-            builder.addAction(R.drawable.exo_controls_play, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_play, "再生", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
-        builder.addAction(R.mipmap.uliza_ic_clear_white_36dp, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
+        builder.addAction(R.mipmap.uliza_ic_clear_white_36dp, "再生終了", getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
 //        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

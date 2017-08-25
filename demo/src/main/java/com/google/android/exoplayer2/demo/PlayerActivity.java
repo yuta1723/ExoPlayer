@@ -203,15 +203,15 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onResume() {
         Log.d(TAG, "onResume()");
         super.onResume();
-        if (FLAG_PUSHED_CANSEL_BUTTON) {
-            FLAG_PUSHED_CANSEL_BUTTON = false;
-            PackageManager packageManager = this.getPackageManager();
-            String packageName = this.getApplicationContext().getPackageName();
-            Intent intent = packageManager.getLaunchIntentForPackage(packageName);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            this.startActivity(intent);
-            finish();
-        }
+//        if (FLAG_PUSHED_CANSEL_BUTTON) {
+//            FLAG_PUSHED_CANSEL_BUTTON = false;
+//            PackageManager packageManager = this.getPackageManager();
+//            String packageName = this.getApplicationContext().getPackageName();
+//            Intent intent = packageManager.getLaunchIntentForPackage(packageName);
+//            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//            this.startActivity(intent);
+//            finish();
+//        }
         if (FLAG_START_NOTIFICATION_SERVICE) {
             goneNotificationAndStopService();
         }
@@ -754,6 +754,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             Log.d(TAG,"ACTION_STOP_PLAYER");
             FLAG_PUSHED_CANSEL_BUTTON = true;
             player.setPlayWhenReady(false);
+            player.release();
+            finish();
         }
         return flag;
     }
@@ -793,7 +795,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 player.setPlayWhenReady(false);
                 if (mService != null) {
                     try {
-                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
+                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
                     } catch (RemoteException e) {
                         e.printStackTrace();
                     }
@@ -809,7 +811,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     player.setPlayWhenReady(true);
                     if (mService != null) {
                         try {
-                            mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+                            mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         }
