@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
@@ -26,14 +27,12 @@ public class NotificationService extends Service {
     private String TAG = NotificationService.class.getSimpleName();
 
     private String TITLE_NOTIFICATION = "BigBuckBunny";
-    private String TEXT_NOIFICATION = "を再生しています";
+    private String TEXT_NOIFICATION = "で再生しています。";
 
     private static int NOTIFICATION_ID = 10000;
     static final int MSG_CHANGE_PLAY = 2;
     static final int MSG_CHANGE_PAUSE = 3;
     static final int MSG_REMOVE_NOTIFICATION = 4;
-
-
 
     class IncomingHandler extends Handler {
         @Override
@@ -119,37 +118,36 @@ public class NotificationService extends Service {
 
     private void createControlerNotification(boolean isPlaying) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            builder.setColor(Color.RED);
-//        }
         builder.setSmallIcon(R.drawable.ic_launcher);
         Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle(TITLE_NOTIFICATION);
-        builder.setContentText(TITLE_NOTIFICATION + TEXT_NOIFICATION);
+        builder.setContentText(getApplicationName() + TEXT_NOIFICATION);
         builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
         builder.setShowWhen(false);
-//        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_DELETE_PLAYER));
-//        builder.addAction(R.drawable.exo_controls_rewind, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT));
+        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
         if (isPlaying) {
             builder.addAction(R.drawable.exo_controls_pause, "一時停止", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
             builder.addAction(R.drawable.exo_controls_play, "再生", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
-        builder.addAction(R.mipmap.uliza_ic_clear_white_36dp, "再生終了", getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
-//        builder.addAction(R.drawable.exo_controls_fastforward, "", getPendingIntentWithBroadcast(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT));
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionCompat mediaSession = new MediaSessionCompat(getApplicationContext(), "naito");
             builder.setStyle(new NotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(0,1));
+                    .setShowActionsInCompactView(0));
         }
-        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
         Notification notification = builder.build();
-        notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
-//        manager.notify(NOTIFICATION_ID, notification);//todo generate random notification Id
-        startForeground(NOTIFICATION_ID, notification);
+        NotificationManagerCompat manager = NotificationManagerCompat.from(getApplicationContext());
+        if (isPlaying) {
+            notification.flags = Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+            manager.notify(NOTIFICATION_ID, notification);
+            //memo startForegroundを行うと、通知の削除ができなくなる。
+            //そのため、startForeground/stopForegroundをとりあえず使用しない形で実装
+//            startForeground(NOTIFICATION_ID, notification);
+        } else {
+            manager.notify(NOTIFICATION_ID, notification);
+        }
     }
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
@@ -157,8 +155,17 @@ public class NotificationService extends Service {
     }
 
     private void goneNotification() {
-        stopForeground(true);
-//        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-//        manager.cancel(NOTIFICATION_ID);
+//        stopForeground(true);
+        NotificationManager manager = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        manager.cancel(NOTIFICATION_ID);
+    }
+
+    private String getApplicationName() {
+        String appName = "";
+        int id = getResources().getIdentifier("application_name", "string", getPackageName());
+        if (id != 0) {
+            appName = getResources().getString(id);
+        }
+        return appName;
     }
 }
