@@ -179,10 +179,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (commandFilter == null) {
             commandFilter = new IntentFilter();
             commandFilter.addAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
-            commandFilter.addAction(PlayerUtil.ACTION_PAUSE_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT);
-            commandFilter.addAction(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT);
             commandFilter.addAction(PlayerUtil.ACTION_STOP_PLAYER);
         }
     }
@@ -722,15 +719,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 } catch (RemoteException e) {
                     Log.d(TAG, e.getMessage());
                 }
-                break;
-            case PlayerUtil.ACTION_PAUSE_INTENT:
-                player.setPlayWhenReady(false);
-                break;
-            case PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT:
-                player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
-                break;
-            case PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT:
-                player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
                 break;
             case PlayerUtil.ACTION_RESTART_ACTIVITY:
                 Log.d(TAG, "back to playback into activity");
