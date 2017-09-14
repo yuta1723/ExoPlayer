@@ -792,40 +792,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             }
         }
     }
-
-    class AudioNoisyReceiver extends BroadcastReceiver {
-        private String TAG = AudioNoisyReceiver.class.getSimpleName();
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive");
-            String action = intent.getAction();
-            if (action.equals(Intent.ACTION_HEADSET_PLUG)) {
-                Log.d(TAG, "ヘッドホンが抜けた(ACTION_HEADSET_PLUG)");
-            } else if (action.equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
-                Log.d(TAG, "ヘッドホンが抜けた(ACTION_AUDIO_BECOMING_NOISY)");
-                if (player == null) {
-                    //player == nullの時は、まだonDestroyまで遷移してない時なので
-                    return;
-                }
-                pauseplayer();
-                if (mService != null) {
-                    try {
-                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        public void pauseplayer() {
-            if (player == null) {
-                return;
-            }
-            player.setPlayWhenReady(false);
-        }
-    }
     //playerをシングルトンにして,manager classを作成してapplication clzassとactivityクラスで別のreceiverを登録しないような実装にしないといけない。
 
     // todo play pauseのたびに、AudioFocusを取得しないといけない。
@@ -877,6 +843,22 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             mBound = false;
         }
     };
+
+    class AudioNoisyReceiver extends BroadcastReceiver {
+        private String TAG = AudioNoisyReceiver.class.getSimpleName();
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive");
+            if (intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY)) {
+                Log.d(TAG, "Audio becoming noisy");
+                if (mAudioStateChangeListener != null) {
+                    mAudioStateChangeListener.onUnpluggedAudioHardware();
+                }
+            }
+        }
+    }
+
     private final AudioFocusHelper.LocalAudioStateChangeListener mAudioStateChangeListener = new AudioFocusHelper.LocalAudioStateChangeListener() {
         @Override
         public void onObtainAudioFocus() {
@@ -919,6 +901,15 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         public void onUnpluggedAudioHardware() {
             Log.d(TAG, "onUnpluggedAudioHardware");
             pauseVideo();
+//            todo バックグラウンド時のみメッセージを送信するようにする。
+            if (mService == null) {
+                return;
+            }
+            try {
+                mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+            } catch (RemoteException e) {
+                Log.d(TAG, e.getMessage());
+            }
         }
 
         private void pauseVideo() {
