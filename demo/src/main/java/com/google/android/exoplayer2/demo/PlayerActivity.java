@@ -432,7 +432,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             playerNeedsSource = false;
             updateButtonVisibilities();
         }
-        mainHandler.postDelayed(r, 1000);
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
@@ -702,63 +701,66 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     };
 
-    private boolean isCommandIntent(Intent intent) {
+    private void isCommandIntent(Intent intent) {
         if (intent == null || player == null) {
-            return false;
+            return;
         }
-        boolean flag = false;
-        if (intent.getAction().equals(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT)) {
-            Message msg = null;
-            if (isPlaying()) {
+        String action = intent.getAction();
+        switch (action) {
+            case PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT:
+                Message msg = null;
+                if (isPlaying()) {
+                    player.setPlayWhenReady(false);
+                    msg = Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0);
+                } else {
+                    player.setPlayWhenReady(true);
+                    createAudioFocus();
+                    msg = Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0);
+                }
+                try {
+                    mService.send(msg);
+                } catch (RemoteException e) {
+                    Log.d(TAG, e.getMessage());
+                }
+                break;
+            case PlayerUtil.ACTION_PAUSE_INTENT:
                 player.setPlayWhenReady(false);
-                msg = Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0);
-            } else {
-                player.setPlayWhenReady(true);
-                createAudioFocus();
-                msg = Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0);
-            }
-            try {
-                mService.send(msg);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-//            startNotificationService();
-            flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_PAUSE_INTENT)) {
-            player.setPlayWhenReady(false);
-            flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT)) {
-            player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
-            flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT)) {
-            player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
-            flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_RESTART_ACTIVITY)) {
-            Log.d(TAG, "back to playback into activity");
-            Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
-            try {
-                mService.send(msg);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-            Intent i = new Intent(this, PlayerActivity.class);
-            i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
-            startActivity(i);
-            flag = true;
-        } else if (intent.getAction().equals(PlayerUtil.ACTION_STOP_PLAYER)) {
-            Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
-            try {
-                mService.send(msg);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-            Log.d(TAG,"ACTION_STOP_PLAYER");
-            FLAG_PUSHED_CANSEL_BUTTON = true;
-            player.setPlayWhenReady(false);
-            player.release();
-            finish();
+                break;
+            case PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT:
+                player.seekTo(player.getCurrentPosition() - SEEK_TO_PREVIOUS_DEFAULT_VALUE);
+                break;
+            case PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT:
+                player.seekTo(player.getCurrentPosition() + SEEK_TO_FOWARDS_DEFAULT_VALUE);
+                break;
+            case PlayerUtil.ACTION_RESTART_ACTIVITY:
+                Log.d(TAG, "back to playback into activity");
+                Message restartMessage = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+                try {
+                    mService.send(restartMessage);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                Intent i = new Intent(this, PlayerActivity.class);
+                i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
+                startActivity(i);
+                break;
+            case PlayerUtil.ACTION_STOP_PLAYER:
+                Message stopMessage = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+                try {
+                    mService.send(stopMessage);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                Log.d(TAG, "ACTION_STOP_PLAYER");
+                FLAG_PUSHED_CANSEL_BUTTON = true;
+                player.setPlayWhenReady(false);
+                player.release();
+                finish();
+                break;
+            default:
+                Log.d(TAG, "invalid action  : " + action);
         }
-        return flag;
+        return ;
     }
 
     private void createAudioFocus() {
@@ -801,22 +803,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 Log.e(TAG,"throw exception when unregister ControllerBroadcastReceiver",e);
             }
         }
-    }
-
-    Runnable r = new Runnable() {
-        @Override
-        public void run() {
-            Log.d(TAG, "run!");
-            if (player != null) {
-//                Log.d(TAG, "currentPosition : " + player.getCurrentPosition() + " duration : " + player.getDuration());
-            }
-//            Log.d(TAG, "this thread is mainThread " + isCurrent());
-            mainHandler.postDelayed(r, 10000);
-        }
-    };
-
-    private boolean isCurrent() {
-        return Thread.currentThread().equals(getMainLooper().getThread());
     }
 
     class AudioNoisyReceiver extends BroadcastReceiver {
