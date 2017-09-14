@@ -762,80 +762,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     private void createAudioFocus() {
         AudioManager am = (AudioManager) getSystemService(this.AUDIO_SERVICE);
-        am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-            boolean isTransient = false;
-
-            @Override
-            public void onAudioFocusChange(int focusChange) {
-                Log.d(TAG, "onAudioFocusChange");
-                switch (focusChange) {
-                    case AudioManager.AUDIOFOCUS_LOSS:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS");
-                        audioFocusLoss();
-                        break;
-                    case AudioManager.AUDIOFOCUS_GAIN:
-                        Log.d(TAG, "AUDIOFOCUS_GAIN");
-                        audioFocusGain();
-                        break;
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
-                        audioFocusLossTransmit();
-                        break;
-                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                        Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
-                        audioFocusLossTransmitCanDuck();
-                        break;
-                }
-            }
-
-            private void audioFocusLoss() {
-                if (player == null) {
-                    return;
-                }
-                player.setPlayWhenReady(false);
-                if (mService != null) {
-                    try {
-                        mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            private void audioFocusGain() {
-                if (player == null) {
-                    return;
-                }
-                if (isTransient && !isPlaying()) {
-                    Log.d(TAG, "play stop");
-                    player.setPlayWhenReady(true);
-                    if (mService != null) {
-                        try {
-                            mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-            }
-
-            private void audioFocusLossTransmit() {
-                isTransient = true;
-                if (player == null) {
-                    return;
-                }
-                if (isPlaying()) {
-                    Log.d(TAG, "play stop");
-                    player.setPlayWhenReady(false);
-                    startNotificationService();
-                }
-            }
-
-            private void audioFocusLossTransmitCanDuck() {
-
-            }
-        }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        AudioFocusHelper audioFocusHelper = new AudioFocusHelper();
+        audioFocusHelper.setAudioFocusChangeListener(mAudioStateChangeListener);
+        am.requestAudioFocus(audioFocusHelper, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
     }
 
     private void unregistBroadcastReceiver() {
@@ -973,4 +902,99 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             mBound = false;
         }
     };
+    private final AudioFocusHelper.LocalAudioStateChangeListener mAudioStateChangeListener = new AudioFocusHelper.LocalAudioStateChangeListener() {
+        @Override
+        public void onObtainAudioFocus() {
+            Log.d(TAG, "onObtainAudioFocus");
+            if (player == null) {
+                return;
+            }
+            player.setPlayWhenReady(true);
+        }
+
+        @Override
+        public void onLossAudioFocusTransientCanDuck() {
+            Log.d(TAG, "onLossAudioFocusTransientCanDuck");
+            if (player != null) {
+            }
+        }
+
+        @Override
+        public void onLossAudioFocusTransient() {
+            Log.d(TAG, "onLossAudioFocusTransient");
+            pauseVideo();
+            startNotificationService();
+        }
+
+        @Override
+        public void onLossAudioFocus() {
+            Log.d(TAG, "onLossAudioFocus");
+            if (player == null || mService == null) {
+                return;
+            }
+            player.setPlayWhenReady(false);
+            try {
+                mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+            } catch (RemoteException e) {
+                Log.d(TAG, e.getMessage());
+            }
+        }
+
+        @Override
+        public void onUnpluggedAudioHardware() {
+            Log.d(TAG, "onUnpluggedAudioHardware", "");
+            pauseVideo();
+        }
+
+        private void pauseVideo() {
+            if (player != null && isPlaying()) {
+                // Pause force even if the canPause returns false in this playback
+                player.setPlayWhenReady(false);
+            }
+        }
+    };
+}
+
+class AudioFocusHelper implements AudioManager.OnAudioFocusChangeListener {
+    public interface LocalAudioStateChangeListener {
+        public abstract void onLossAudioFocus();
+
+        public abstract void onLossAudioFocusTransient();
+
+        public abstract void onLossAudioFocusTransientCanDuck();
+
+        public abstract void onObtainAudioFocus();
+
+        public abstract void onUnpluggedAudioHardware();
+    }
+    private String TAG = AudioFocusHelper.class.getSimpleName();
+
+    private LocalAudioStateChangeListener mLocalListener;
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        Log.d(TAG, "onAudioFocusChange : " + focusChange);
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_LOSS:
+                Log.d(TAG, "AUDIOFOCUS_LOSS");
+                mLocalListener.onLossAudioFocus();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN:
+                Log.d(TAG, "AUDIOFOCUS_GAIN");
+                mLocalListener.onObtainAudioFocus();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                mLocalListener.onLossAudioFocusTransient();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                mLocalListener.onLossAudioFocusTransientCanDuck();
+                break;
+        }
+    }
+
+    public void setAudioFocusChangeListener(LocalAudioStateChangeListener localListener) {
+        mLocalListener = localListener;
+    }
 }
