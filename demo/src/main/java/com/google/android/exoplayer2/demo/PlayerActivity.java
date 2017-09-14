@@ -137,6 +137,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private Intent intent;
     private IntentFilter commandFilter;
     private boolean FLAG_ENTER_BACKBUTTON = false;
+    private boolean FLAG_PLAYING_WHEN_INTO_BG = false;
 
     private AudioNoisyReceiver receiver;
 
@@ -219,7 +220,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             Log.d(TAG, "setPlayerInstance to simpleExoPlayerView");
         }
         if (!isPlaying()) {
-            createAudioFocus();
+//            createAudioFocus();
             //todo 調査 : 再生中にbackgroundからforegroundに遷移すると、一時停止してしまうから
         }
     }
@@ -249,21 +250,30 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onPause() {
         Log.d(TAG, "onPause()");
         super.onPause();
+        if (player == null || isPlaying()) {
+            //googleアシスタントアプリ対応のために設定。
+            FLAG_PLAYING_WHEN_INTO_BG = true;
+            player.setPlayWhenReady(false);
+        }
 
 //        android.os.Process.killProcess(android.os.Process.myPid());//これもtask一覧に残るが、アプリのインスタンスは破棄される
 //        this.finish();//これだとtask一覧に残る
 //        this.finishAndRemoveTask();//これだとtask一覧に残らないがAPI > 21
-        if (FLAG_ENTER_BACKBUTTON) {
-            FLAG_ENTER_BACKBUTTON = false;
-            startNotificationService();
-            registerReceiver(mIntentReceiver, commandFilter);
-        }
     }
 
     @Override
     public void onStop() {
         Log.d(TAG, "onStop()");
         super.onStop();
+        if (FLAG_ENTER_BACKBUTTON) {
+            if (FLAG_PLAYING_WHEN_INTO_BG) {
+                FLAG_PLAYING_WHEN_INTO_BG = false;
+                player.setPlayWhenReady(true);
+            }
+            FLAG_ENTER_BACKBUTTON = false;
+            startNotificationService();
+            registerReceiver(mIntentReceiver, commandFilter);
+        }
     }
 
     @Override
