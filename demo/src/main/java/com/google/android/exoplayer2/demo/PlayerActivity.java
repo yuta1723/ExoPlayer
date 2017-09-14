@@ -943,7 +943,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
         @Override
         public void onUnpluggedAudioHardware() {
-            Log.d(TAG, "onUnpluggedAudioHardware", "");
+            Log.d(TAG, "onUnpluggedAudioHardware");
             pauseVideo();
         }
 
