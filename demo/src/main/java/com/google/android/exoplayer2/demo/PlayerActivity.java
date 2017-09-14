@@ -714,6 +714,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 msg = Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0);
             } else {
                 player.setPlayWhenReady(true);
+                createAudioFocus();
                 msg = Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0);
             }
             try {
