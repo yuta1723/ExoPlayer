@@ -15,6 +15,7 @@
  */
 package com.google.android.exoplayer2.demo;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -24,7 +25,9 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.PlaybackParams;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -439,6 +442,16 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             playerNeedsSource = false;
             updateButtonVisibilities();
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            setPlaybackRate(1.5f);
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public void setPlaybackRate(float playbackRate) {
+        PlaybackParams params = new PlaybackParams();
+        params.setSpeed(playbackRate);
+        player.setPlaybackParams(params);
     }
 
     private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
