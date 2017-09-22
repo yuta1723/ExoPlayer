@@ -141,6 +141,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private IntentFilter commandFilter;
     private boolean FLAG_ENTER_BACKBUTTON = false;
     private boolean FLAG_PLAYING_WHEN_INTO_BG = false;
+    private boolean FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = false;
 
     private AudioNoisyReceiver receiver;
 
@@ -221,6 +222,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             initializePlayer();
         } else {
             Log.d(TAG, "setPlayerInstance to simpleExoPlayerView");
+            if(FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT) {
+                player.setPlayWhenReady(true);
+            }
         }
         if (!isPlaying()) {
 //            createAudioFocus();
@@ -256,6 +260,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (player == null || isPlaying()) {
             //googleアシスタントアプリ対応のために設定。
             FLAG_PLAYING_WHEN_INTO_BG = true;
+            FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = true;
             player.setPlayWhenReady(false);
         }
 
@@ -274,6 +279,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 player.setPlayWhenReady(true);
             }
             FLAG_ENTER_BACKBUTTON = false;
+            FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = false;
             startNotificationService();
             registerReceiver(mIntentReceiver, commandFilter);
         }
@@ -443,7 +449,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             updateButtonVisibilities();
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            setPlaybackRate(1.5f);
+//            setPlaybackRate(1.5f);
         }
     }
 
@@ -826,6 +832,30 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         //戻るボタンが押された場合には呼ばれない
 //        Toast.makeText(getApplicationContext(), "Good bye!", Toast.LENGTH_SHORT).show();
         FLAG_ENTER_BACKBUTTON = true;
+    }
+
+    @Override
+    public void onUserInteraction() {
+        Log.d(TAG,"onUserInteraction");
+        super.onUserInteraction();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        Log.d(TAG, "onWindowFocusChanged : " + hasFocus);
+        super.onWindowFocusChanged(hasFocus);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        Log.d(TAG, "onKeyDown keyCode " + keyCode + " event : " + event);
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        Log.d(TAG, "onKeyLongPress keyCode " + keyCode + " event : " + event);
+        return super.onKeyLongPress(keyCode, event);
     }
 
     /** Messenger for communicating with the service. */
