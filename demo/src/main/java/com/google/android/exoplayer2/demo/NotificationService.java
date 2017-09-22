@@ -123,7 +123,7 @@ public class NotificationService extends Service {
         builder.setLargeIcon(bmp1);
         builder.setContentTitle(TITLE_NOTIFICATION);
         builder.setContentText(getApplicationName() + TEXT_NOIFICATION);
-        builder.setContentIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_RESTART_ACTIVITY));
+        builder.setContentIntent(getPendingIntentWithActivities());
         builder.setShowWhen(false);
         builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
         if (isPlaying) {
@@ -152,6 +152,10 @@ public class NotificationService extends Service {
 
     private PendingIntent getPendingIntentWithBroadcast(String action) {
         return PendingIntent.getBroadcast(getApplicationContext(), 0, new Intent(action), 0);
+    }
+
+    private PendingIntent getPendingIntentWithActivities() {
+        return PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), PlayerActivity.class), 0);
     }
 
     private void goneNotification() {

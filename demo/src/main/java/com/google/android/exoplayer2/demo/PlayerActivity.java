@@ -139,9 +139,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private long resumePosition;
     private Intent intent;
     private IntentFilter commandFilter;
-    private boolean FLAG_ENTER_BACKBUTTON = false;
-    private boolean FLAG_PLAYING_WHEN_INTO_BG = false;
-    private boolean FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = false;
 
     private AudioNoisyReceiver receiver;
 
@@ -149,9 +146,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private long SEEK_TO_FOWARDS_DEFAULT_VALUE = 1500;
 
     private boolean FLAG_REGISTED_BROADCASTRECEIVER = false;
-
-    private boolean FLAG_PUSHED_CANSEL_BUTTON = false;
     private boolean FLAG_START_NOTIFICATION_SERVICE = false;
+    private boolean FLAG_PUSH_BACKKEY = false;
 
     // Activity lifecycle
 
@@ -220,15 +216,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         if (player == null) {
             //todo background からの復帰処理を追加
             initializePlayer();
-        } else {
-            Log.d(TAG, "setPlayerInstance to simpleExoPlayerView");
-            if(FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT) {
-                player.setPlayWhenReady(true);
-            }
-        }
-        if (!isPlaying()) {
-//            createAudioFocus();
-            //todo 調査 : 再生中にbackgroundからforegroundに遷移すると、一時停止してしまうから
         }
     }
 
@@ -257,32 +244,24 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     public void onPause() {
         Log.d(TAG, "onPause()");
         super.onPause();
-        if (player == null || isPlaying()) {
-            //googleアシスタントアプリ対応のために設定。
-            FLAG_PLAYING_WHEN_INTO_BG = true;
-            FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = true;
-            player.setPlayWhenReady(false);
-        }
-
-//        android.os.Process.killProcess(android.os.Process.myPid());//これもtask一覧に残るが、アプリのインスタンスは破棄される
-//        this.finish();//これだとtask一覧に残る
-//        this.finishAndRemoveTask();//これだとtask一覧に残らないがAPI > 21
+//        if (player == null || isPlaying()) {
+//            player.setPlayWhenReady(false);
+//        }
     }
 
     @Override
     public void onStop() {
         Log.d(TAG, "onStop()");
         super.onStop();
-        if (FLAG_ENTER_BACKBUTTON) {
-            if (FLAG_PLAYING_WHEN_INTO_BG) {
-                FLAG_PLAYING_WHEN_INTO_BG = false;
-                player.setPlayWhenReady(true);
-            }
-            FLAG_ENTER_BACKBUTTON = false;
-            FLAG_PLAY_WHEN_APP_GOING_TO_GOOGLE_ASSISTANT = false;
-            startNotificationService();
-            registerReceiver(mIntentReceiver, commandFilter);
+        if (FLAG_PUSH_BACKKEY) {
+            Log.d(TAG, "pressed back key");
+            player.release();
+            unregistBroadcastReceiver();
+            FLAG_PUSH_BACKKEY = false;
+            return;
         }
+        startNotificationService();
+        registerReceiver(mIntentReceiver, commandFilter);
     }
 
     @Override
@@ -448,6 +427,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             playerNeedsSource = false;
             updateButtonVisibilities();
         }
+        createAudioFocus();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //            setPlaybackRate(1.5f);
         }
@@ -758,7 +738,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     e.printStackTrace();
                 }
                 Intent i = new Intent(this, PlayerActivity.class);
-                i.setAction(PlayerUtil.ACTION_RESTART_ACTIVITY);
+                //他のアプリ起動時に通知押下してもアプリが起動しない問題が発生した。
+                //その対応が必要
                 startActivity(i);
                 break;
             case PlayerUtil.ACTION_STOP_PLAYER:
@@ -769,7 +750,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                     e.printStackTrace();
                 }
                 Log.d(TAG, "ACTION_STOP_PLAYER");
-                FLAG_PUSHED_CANSEL_BUTTON = true;
                 player.setPlayWhenReady(false);
                 player.release();
                 finish();
@@ -817,7 +797,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             try {
                 unregisterReceiver(mIntentReceiver);
             } catch (IllegalArgumentException e) {
-                Log.e(TAG,"throw exception when unregister ControllerBroadcastReceiver",e);
+                Log.d(TAG, "throw exception when unregister ControllerBroadcastReceiver", e);
             }
         }
     }
@@ -831,7 +811,6 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         //ホームボタンが押された時や、他のアプリが起動した時に呼ばれる
         //戻るボタンが押された場合には呼ばれない
 //        Toast.makeText(getApplicationContext(), "Good bye!", Toast.LENGTH_SHORT).show();
-        FLAG_ENTER_BACKBUTTON = true;
     }
 
     @Override
@@ -849,6 +828,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         Log.d(TAG, "onKeyDown keyCode " + keyCode + " event : " + event);
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            FLAG_PUSH_BACKKEY = true;
+        }
         return super.onKeyDown(keyCode, event);
     }
 
