@@ -149,6 +149,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     private boolean FLAG_START_NOTIFICATION_SERVICE = false;
     private boolean FLAG_PUSH_BACKKEY = false;
 
+    private boolean HASAUDIOFOCUS = false;
+
     // Activity lifecycle
 
     @Override
@@ -761,10 +763,14 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     }
 
     private void createAudioFocus() {
+        if (HASAUDIOFOCUS) {
+            return;
+        }
         AudioManager am = (AudioManager) getSystemService(this.AUDIO_SERVICE);
         AudioFocusHelper audioFocusHelper = new AudioFocusHelper();
         audioFocusHelper.setAudioFocusChangeListener(mAudioStateChangeListener);
         am.requestAudioFocus(audioFocusHelper, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        HASAUDIOFOCUS = true;
     }
 
     private void unregistBroadcastReceiver() {
@@ -894,13 +900,15 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
     }
 
-    private final AudioFocusHelper.LocalAudioStateChangeListener mAudioStateChangeListener = new AudioFocusHelper.LocalAudioStateChangeListener() {
+    private final AudioFocusHelper.LocalAudioStateChangeListener mAudioStateChangeListener =
+            new AudioFocusHelper.LocalAudioStateChangeListener() {
         @Override
         public void onObtainAudioFocus() {
             Log.d(TAG, "onObtainAudioFocus");
             if (player == null) {
                 return;
             }
+            HASAUDIOFOCUS = true;
             player.setPlayWhenReady(true);
         }
 
@@ -916,11 +924,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             Log.d(TAG, "onLossAudioFocusTransient");
             pauseVideo();
             startNotificationService();
+            HASAUDIOFOCUS = false;
         }
 
         @Override
         public void onLossAudioFocus() {
             Log.d(TAG, "onLossAudioFocus");
+            HASAUDIOFOCUS = false;
             if (player == null || mService == null) {
                 return;
             }

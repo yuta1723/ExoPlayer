@@ -84,14 +84,7 @@ public class NotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-//        if (intent == null) {
-//            return super.onStartCommand(intent, flags, startId);
-//        }
         Log.d(TAG, "onStartCommand Flag : " + flags + " intent : " + intent.getAction());
-//        if (intent.getAction().equals(PlayerUtil.ACTION_CREATE_NOTIFICATION)) {
-//            boolean isplaying = intent.getBooleanExtra("isplaying", false);
-//            createControlerNotification(isplaying);
-//        }
         return Service.START_NOT_STICKY;
     }
 
