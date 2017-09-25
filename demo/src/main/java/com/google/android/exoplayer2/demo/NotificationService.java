@@ -104,9 +104,9 @@ public class NotificationService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         Log.d(TAG, "onTaskRemoved");
-        super.onTaskRemoved(rootIntent);
         goneNotification();
         stopSelf();
+        super.onTaskRemoved(rootIntent);
     }
 
     private void createControlerNotification(boolean isPlaying) {

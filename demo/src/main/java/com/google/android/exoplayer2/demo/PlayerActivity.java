@@ -272,6 +272,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         super.onDestroy();
         unregistBroadcastReceiver();
         releasePlayer();
+        if (FLAG_START_NOTIFICATION_SERVICE) {
+            goneNotificationAndStopService();
+        }
     }
 
     @Override
