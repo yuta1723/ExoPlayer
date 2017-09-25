@@ -899,6 +899,14 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
                 if (mAudioStateChangeListener != null) {
                     mAudioStateChangeListener.onUnpluggedAudioHardware();
                 }
+            } else if (intent.getAction().equals(AudioManager.ACTION_HEADSET_PLUG)) {
+                int state = intent.getIntExtra("state", 0);
+                Log.d(TAG, " change PLUG STATUS status : " + state);
+                if (state > 0) {
+                    Log.d(TAG, "plug in the headSet");
+                } else {
+                    Log.d(TAG, "plug out the headSet");
+                }
             }
         }
     }
