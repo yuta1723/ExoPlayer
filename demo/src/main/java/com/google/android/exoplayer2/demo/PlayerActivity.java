@@ -535,8 +535,11 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        Log.d(TAG, "onPlayerStateChanged : " + playbackState);
         if (playbackState == ExoPlayer.STATE_ENDED) {
             showControls();
+            goneNotificationAndStopService();
+            player.setPlayWhenReady(false);
         }
         updateButtonVisibilities();
     }

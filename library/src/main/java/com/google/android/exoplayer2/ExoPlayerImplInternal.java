@@ -479,7 +479,7 @@ import java.io.IOException;
     long playingPeriodDurationUs = timeline.getPeriod(playingPeriodHolder.index, period)
         .getDurationUs();
     if (allRenderersEnded
-        && (playingPeriodDurationUs == C.TIME_UNSET
+        || (playingPeriodDurationUs == C.TIME_UNSET
         || playingPeriodDurationUs <= playbackInfo.positionUs)
         && playingPeriodHolder.isLast) {
       setState(ExoPlayer.STATE_ENDED);
