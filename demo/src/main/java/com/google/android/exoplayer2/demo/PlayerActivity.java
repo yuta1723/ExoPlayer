@@ -230,7 +230,11 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        unbindService(mConnection);
+        try {
+            unbindService(mConnection);
+        } catch (Exception e) {
+            Log.d(TAG,e.getMessage());
+        }
     }
 
     @Override
