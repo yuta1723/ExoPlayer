@@ -43,8 +43,10 @@ dependencies {
     compile project(':library')
     compile 'com.android.support:support-compat:24.2.0'
     compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.google.firebase:firebase-crash:11.0.2'
     withExtensionsCompile project(path: ':extension-ffmpeg')
     withExtensionsCompile project(path: ':extension-flac')
     withExtensionsCompile project(path: ':extension-opus')
     withExtensionsCompile project(path: ':extension-vp9')
 }
+apply plugin: 'com.google.gms.google-services'

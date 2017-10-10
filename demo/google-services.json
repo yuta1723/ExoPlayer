@@ -1,58 +1,27 @@
 {
   "project_info": {
-    "project_number": "888158262504",
-    "firebase_url": "https://ulizaplayer-e6643.firebaseio.com",
-    "project_id": "ulizaplayer-e6643",
-    "storage_bucket": "ulizaplayer-e6643.appspot.com"
+    "project_number": "563733396836",
+    "firebase_url": "https://fir-3e9bf.firebaseio.com",
+    "project_id": "fir-3e9bf",
+    "storage_bucket": "fir-3e9bf.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:888158262504:android:0e59b3ec0e4625f6",
-        "android_client_info": {
-          "package_name": "com.yourapp.android"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "888158262504-3fag7lb95sl0k72dnu5aqdgqsejmlof2.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyA6uVsO91CPo82fAMFal1GmgKkn1p5Db4Q"
-        }
-      ],
-      "services": {
-        "analytics_service": {
-          "status": 1
-        },
-        "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:888158262504:android:4a3af619018d9bf8",
+        "mobilesdk_app_id": "1:563733396836:android:4a3af619018d9bf8",
         "android_client_info": {
           "package_name": "jp.co.suvt.ulizaplayer.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "888158262504-3fag7lb95sl0k72dnu5aqdgqsejmlof2.apps.googleusercontent.com",
+          "client_id": "563733396836-co7m9mavlg4f56n6cm5kdiel1b3nco6m.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA6uVsO91CPo82fAMFal1GmgKkn1p5Db4Q"
+          "current_key": "AIzaSyBBjVYqhXCa6ObnmpRJK-PKqhSvHz4Rg6w"
         }
       ],
       "services": {
@@ -70,20 +39,82 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:888158262504:android:5ecd74e933e86db7",
+        "mobilesdk_app_id": "1:563733396836:android:81b29367f21dbc11",
         "android_client_info": {
-          "package_name": "com.google.android.exoplayer"
+          "package_name": "jp.co.suvt.ulizaplayer"
         }
       },
       "oauth_client": [
         {
-          "client_id": "888158262504-3fag7lb95sl0k72dnu5aqdgqsejmlof2.apps.googleusercontent.com",
+          "client_id": "563733396836-co7m9mavlg4f56n6cm5kdiel1b3nco6m.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA6uVsO91CPo82fAMFal1GmgKkn1p5Db4Q"
+          "current_key": "AIzaSyBBjVYqhXCa6ObnmpRJK-PKqhSvHz4Rg6w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563733396836:android:2b070ac5679a0db0",
+        "android_client_info": {
+          "package_name": "com.google.android.exoplayer2.demo.DemoApplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563733396836-co7m9mavlg4f56n6cm5kdiel1b3nco6m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBjVYqhXCa6ObnmpRJK-PKqhSvHz4Rg6w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:563733396836:android:68cad9d25525d7b0",
+        "android_client_info": {
+          "package_name": "com.google.android.exoplayer2.demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "563733396836-co7m9mavlg4f56n6cm5kdiel1b3nco6m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBjVYqhXCa6ObnmpRJK-PKqhSvHz4Rg6w"
         }
       ],
       "services": {
