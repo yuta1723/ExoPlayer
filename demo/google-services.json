@@ -70,9 +70,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:563733396836:android:2b070ac5679a0db0",
+        "mobilesdk_app_id": "1:563733396836:android:68cad9d25525d7b0",
         "android_client_info": {
-          "package_name": "com.google.android.exoplayer2.demo.DemoApplication"
+          "package_name": "com.google.android.exoplayer2.demo"
         }
       },
       "oauth_client": [
@@ -101,9 +101,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:563733396836:android:68cad9d25525d7b0",
+        "mobilesdk_app_id": "1:563733396836:android:f02e9e7d5d0b1ea2",
         "android_client_info": {
-          "package_name": "com.google.android.exoplayer2.demo"
+          "package_name": "jp.co.suvt.ynaito.backgroundplayback.sample"
         }
       },
       "oauth_client": [
