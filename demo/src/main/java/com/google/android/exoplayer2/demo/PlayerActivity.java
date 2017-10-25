@@ -189,6 +189,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     if (Util.SDK_INT > 23) {
       releasePlayer();
     }
+    shouldAutoPlay = false;
   }
 
   @Override
@@ -306,12 +307,13 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         @Override
         public void onRenderedFirstFrame(Surface surface) {
           Log.d(TAG,"onRenderedFirstFrame");
-          if (player == null) {
-            return;
-          }
-          if (!isShouldAutoPlay) {
-            player.setPlayWhenReady(false);
-          }
+          //memo なくても行けた。
+//          if (player == null) {
+//            return;
+//          }
+//          if (!isShouldAutoPlay) {
+//            player.setPlayWhenReady(false);
+//          }
 
         }
 
