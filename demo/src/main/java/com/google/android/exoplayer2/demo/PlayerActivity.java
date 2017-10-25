@@ -22,7 +22,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Surface;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -34,8 +36,10 @@ import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.decoder.DecoderCounters;
 import com.google.android.exoplayer2.drm.DefaultDrmSessionManager;
 import com.google.android.exoplayer2.drm.DrmSessionManager;
 import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
@@ -67,6 +71,8 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.video.VideoRendererEventListener;
+
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -115,6 +121,8 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   private boolean shouldAutoPlay;
   private int resumeWindow;
   private long resumePosition;
+
+  private boolean isShouldAutoPlay = true;
 
   // Activity lifecycle
 
@@ -169,6 +177,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   @Override
   public void onPause() {
     super.onPause();
+    isShouldAutoPlay = false;
     if (Util.SDK_INT <= 23) {
       releasePlayer();
     }
@@ -266,7 +275,51 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       eventLogger = new EventLogger(trackSelector);
       player.addListener(eventLogger);
       player.setAudioDebugListener(eventLogger);
-      player.setVideoDebugListener(eventLogger);
+      player.setVideoDebugListener(new VideoRendererEventListener(){
+
+        private String TAG = VideoRendererEventListener.class.getSimpleName();
+        @Override
+        public void onVideoEnabled(DecoderCounters counters) {
+
+        }
+
+        @Override
+        public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
+
+        }
+
+        @Override
+        public void onVideoInputFormatChanged(Format format) {
+
+        }
+
+        @Override
+        public void onDroppedFrames(int count, long elapsedMs) {
+
+        }
+
+        @Override
+        public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+
+        }
+
+        @Override
+        public void onRenderedFirstFrame(Surface surface) {
+          Log.d(TAG,"onRenderedFirstFrame");
+          if (player == null) {
+            return;
+          }
+          if (!isShouldAutoPlay) {
+            player.setPlayWhenReady(false);
+          }
+
+        }
+
+        @Override
+        public void onVideoDisabled(DecoderCounters counters) {
+
+        }
+      });
       player.setMetadataOutput(eventLogger);
 
       simpleExoPlayerView.setPlayer(player);

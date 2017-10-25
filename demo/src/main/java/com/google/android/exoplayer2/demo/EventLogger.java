@@ -55,7 +55,7 @@ import java.util.Locale;
  * Logs player events using {@link Log}.
  */
 /* package */ final class EventLogger implements ExoPlayer.EventListener,
-    AudioRendererEventListener, VideoRendererEventListener, AdaptiveMediaSourceEventListener,
+    AudioRendererEventListener, AdaptiveMediaSourceEventListener,
     ExtractorMediaSource.EventListener, DefaultDrmSessionManager.EventListener,
     MetadataRenderer.Output {
 
@@ -235,46 +235,6 @@ import java.util.Locale;
   public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
     printInternalError("audioTrackUnderrun [" + bufferSize + ", " + bufferSizeMs + ", "
         + elapsedSinceLastFeedMs + "]", null);
-  }
-
-  // VideoRendererEventListener
-
-  @Override
-  public void onVideoEnabled(DecoderCounters counters) {
-    Log.d(TAG, "videoEnabled [" + getSessionTimeString() + "]");
-  }
-
-  @Override
-  public void onVideoDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-      long initializationDurationMs) {
-    Log.d(TAG, "videoDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
-  }
-
-  @Override
-  public void onVideoInputFormatChanged(Format format) {
-    Log.d(TAG, "videoFormatChanged [" + getSessionTimeString() + ", " + Format.toLogString(format)
-        + "]");
-  }
-
-  @Override
-  public void onVideoDisabled(DecoderCounters counters) {
-    Log.d(TAG, "videoDisabled [" + getSessionTimeString() + "]");
-  }
-
-  @Override
-  public void onDroppedFrames(int count, long elapsed) {
-    Log.d(TAG, "droppedFrames [" + getSessionTimeString() + ", " + count + "]");
-  }
-
-  @Override
-  public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-      float pixelWidthHeightRatio) {
-    // Do nothing.
-  }
-
-  @Override
-  public void onRenderedFirstFrame(Surface surface) {
-    // Do nothing.
   }
 
   // DefaultDrmSessionManager.EventListener
