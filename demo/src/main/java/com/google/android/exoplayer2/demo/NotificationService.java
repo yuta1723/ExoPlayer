@@ -26,6 +26,9 @@ import android.widget.Toast;
 public class NotificationService extends Service {
     private String TAG = NotificationService.class.getSimpleName();
 
+    public static final String ACTION_TOGGLE_PLAY_PAUSE_INTENT = "action_play_pause";
+    public static final String ACTION_STOP_PLAYER = "action_delete_player";
+
     private String TITLE_NOTIFICATION = "BigBuckBunny";
     private String TEXT_NOIFICATION = "で再生しています。";
 
@@ -118,11 +121,11 @@ public class NotificationService extends Service {
         builder.setContentText(getApplicationName() + TEXT_NOIFICATION);
         builder.setContentIntent(getPendingIntentWithActivities());
         builder.setShowWhen(false);
-        builder.setDeleteIntent(getPendingIntentWithBroadcast(PlayerUtil.ACTION_STOP_PLAYER));
+        builder.setDeleteIntent(getPendingIntentWithBroadcast(ACTION_STOP_PLAYER));
         if (isPlaying) {
-            builder.addAction(R.drawable.exo_controls_pause, "一時停止", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_pause, "一時停止", getPendingIntentWithBroadcast(ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         } else {
-            builder.addAction(R.drawable.exo_controls_play, "再生", getPendingIntentWithBroadcast(PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT));
+            builder.addAction(R.drawable.exo_controls_play, "再生", getPendingIntentWithBroadcast(ACTION_TOGGLE_PLAY_PAUSE_INTENT));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionCompat mediaSession = new MediaSessionCompat(getApplicationContext(), "naito");

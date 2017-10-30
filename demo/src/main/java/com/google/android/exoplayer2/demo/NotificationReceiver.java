@@ -21,28 +21,16 @@ public class NotificationReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.d(TAG, "action " + action);
         switch (action) {
-            case PlayerUtil.ACTION_RESTART_ACTIVITY:
+            case NotificationService.ACTION_TOGGLE_PLAY_PAUSE_INTENT:
                 context.startActivity(createPlayerActivityIntent(context, action));
                 break;
-            case PlayerUtil.ACTION_PAUSE_INTENT:
-                context.startActivity(createPlayerActivityIntent(context, action));
-                break;
-            case PlayerUtil.ACTION_SEEK_TO_FOWARD_INTENT:
-                context.startActivity(createPlayerActivityIntent(context, action));
-                break;
-            case PlayerUtil.ACTION_SEEK_TO_PREVIOUS_INTENT:
-                context.startActivity(createPlayerActivityIntent(context, action));
-                break;
-            case PlayerUtil.ACTION_TOGGLE_PLAY_PAUSE_INTENT:
-                context.startActivity(createPlayerActivityIntent(context, action));
-                break;
-            case PlayerUtil.ACTION_STOP_PLAYER:
+            case NotificationService.ACTION_STOP_PLAYER:
                 context.startActivity(createPlayerActivityIntent(context, action));
                 break;
         }
     }
 
     private Intent createPlayerActivityIntent(Context context, String action) {
-        return new Intent(context,PlayerActivity.class).setAction(action);
+        return new Intent(context, PlayerActivity.class).setAction(action);
     }
 }

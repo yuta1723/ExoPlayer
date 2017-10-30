@@ -52,6 +52,10 @@ android {
 }
 
 dependencies {
+
+    compile 'com.android.support:support-compat:24.2.0'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+
     compile project(modulePrefix + 'library-core')
     compile project(modulePrefix + 'library-dash')
     compile project(modulePrefix + 'library-hls')
