@@ -114,8 +114,8 @@ public class NotificationService extends Service {
 
     private void createControlerNotification(boolean isPlaying) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.drawable.ic_launcher);
-        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         builder.setLargeIcon(bmp1);
         builder.setContentTitle(TITLE_NOTIFICATION);
         builder.setContentText(getApplicationName() + TEXT_NOIFICATION);

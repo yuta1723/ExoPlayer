@@ -16,14 +16,21 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -36,6 +43,7 @@ import android.widget.Toast;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
@@ -85,6 +93,8 @@ import java.util.UUID;
  */
 public class PlayerActivity extends Activity implements OnClickListener, EventListener,
     PlaybackControlView.VisibilityListener {
+
+  private String TAG = PlayerActivity.class.getSimpleName();
 
   public static final String DRM_SCHEME_UUID_EXTRA = "drm_scheme_uuid";
   public static final String DRM_LICENSE_URL = "drm_license_url";
@@ -657,6 +667,53 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
       cause = cause.getCause();
     }
     return false;
+  }
+
+  private Messenger mService;
+  boolean mBound = true;
+  private ServiceConnection mConnection = new ServiceConnection() {
+    public void onServiceConnected(ComponentName className, IBinder service) {
+      Log.d(TAG,"enter onServiceConnected");
+      // This is called when the connection with the service has been
+      // established, giving us the object we can use to
+      // interact with the service.  We are communicating with the
+      // service using a Messenger, so here we get a client-side
+      // representation of that from the raw IBinder object.
+      mService = new Messenger(service);
+      try {
+        if (isPlaying()) {
+          mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0));
+        } else {
+          mService.send(Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0));
+        }
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+      mBound = true;
+    }
+
+    public void onServiceDisconnected(ComponentName className) {
+      Log.d(TAG,"enter onServiceDisconnected");
+      // This is called when the connection with the service has been
+      // unexpectedly disconnected -- that is, its process crashed.
+      mService = null;
+      mBound = false;
+    }
+  };
+
+  public boolean isPlaying() {
+    if (player == null) {
+      return false;
+    }
+    if (player.getPlayWhenReady()) {
+      if (player.getPlaybackState() == ExoPlayer.STATE_READY || player.getPlaybackState() == ExoPlayer.STATE_BUFFERING) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
 }
