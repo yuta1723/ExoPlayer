@@ -147,13 +147,21 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   //FIXME background機能を無効にする場合はfalseに
   private boolean isBackgroundEnable = true;
 
+  //Homeボタン押下等、BG再生開始ケースかを判定するためのフラグ
+  //onPauseのみだと、Backキー押下などのケースも含まれているため、onUserLeaveHint→onPauseの順に実行された場合のみBG再生を行う。
+  private boolean isHomeButtonClicked = false;
   private boolean isGotoBackground = false;
-  private boolean FLAG_START_NOTIFICATION_SERVICE = false;
 
   private IntentFilter intentFilter;
 
 
   // Activity lifecycle
+
+  @Override
+  protected void onUserLeaveHint() {
+    super.onUserLeaveHint();
+    isHomeButtonClicked = true;
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -227,7 +235,8 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     Log.d(TAG,"onPause");
     super.onPause();
     isGotoBackground = true;
-    if (isBackgroundEnable) {
+    if (isBackgroundEnable && isHomeButtonClicked) {
+      isHomeButtonClicked = false;
       startNotificationService();
       registerReceiver(mIntentReceiver, intentFilter);
     } else {
@@ -743,7 +752,6 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
 
   private void goneNotificationAndStopService () {
     Log.d(TAG, "goneNotificationAndStopService");
-    FLAG_START_NOTIFICATION_SERVICE = false;
     Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
     if (mService == null) {
       Log.e(TAG, "mService is null. this case should be error");
@@ -766,7 +774,6 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
       return;
     }
     Log.d(TAG, "startNotificationService");
-    FLAG_START_NOTIFICATION_SERVICE = true;
     bindService(new Intent(PlayerActivity.this, NotificationService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
 
