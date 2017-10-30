@@ -146,6 +146,7 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   private boolean isBackgroundEnable = true;
 
   private boolean isGotoBackground = false;
+  private boolean FLAG_START_NOTIFICATION_SERVICE = false;
 
 
   // Activity lifecycle
@@ -187,6 +188,7 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     super.onStart();
     if (isBackgroundEnable && isGotoBackground) {
       simpleExoPlayerView.setPlayer(player);
+      goneNotificationAndStopService();
       return;
     } else if (isGotoBackground) {
       shouldAutoPlay = false;
@@ -207,7 +209,9 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   public void onPause() {
     super.onPause();
     isGotoBackground = true;
-    if (!isBackgroundEnable) {
+    if (isBackgroundEnable) {
+      startNotificationService();
+    } else {
       releasePlayer();
     }
   }
@@ -714,6 +718,35 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     } else {
       return false;
     }
+  }
+
+  private void goneNotificationAndStopService () {
+    Log.d(TAG, "goneNotificationAndStopService");
+    FLAG_START_NOTIFICATION_SERVICE = false;
+    Message msg = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+    if (mService == null) {
+      Log.e(TAG, "mService is null. this case should be error");
+      return;
+    }
+    try {
+      mService.send(msg);
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    }
+    try {
+      unbindService(mConnection);
+    } catch (Exception e) {
+      Log.d(TAG,e.getMessage());
+    }
+  }
+
+  private void startNotificationService() {
+    if (player == null) {
+      return;
+    }
+    Log.d(TAG, "startNotificationService");
+    FLAG_START_NOTIFICATION_SERVICE = true;
+    bindService(new Intent(PlayerActivity.this, NotificationService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
 
 }
