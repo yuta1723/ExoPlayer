@@ -132,6 +132,12 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   private Uri loadedAdTagUri;
   private ViewGroup adOverlayViewGroup;
 
+  //FIXME background機能を無効にする場合はfalseに
+  private boolean isBackgroundEnable = true;
+
+  private boolean isGotoBackground = false;
+
+
   // Activity lifecycle
 
   @Override
@@ -169,23 +175,29 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   @Override
   public void onStart() {
     super.onStart();
-    if (Util.SDK_INT > 23) {
-      initializePlayer();
+    if (isBackgroundEnable && isGotoBackground) {
+      simpleExoPlayerView.setPlayer(player);
+      return;
+    } else if (isGotoBackground) {
+      shouldAutoPlay = false;
     }
+    initializePlayer();
   }
 
   @Override
   public void onResume() {
     super.onResume();
-    if ((Util.SDK_INT <= 23 || player == null)) {
-      initializePlayer();
-    }
+    //initialPlayerを実行するタイミングによって動作が異なることはない。
+//    if ((Util.SDK_INT <= 23 || player == null)) {
+//      initializePlayer();
+//    }
   }
 
   @Override
   public void onPause() {
     super.onPause();
-    if (Util.SDK_INT <= 23) {
+    isGotoBackground = true;
+    if (!isBackgroundEnable) {
       releasePlayer();
     }
   }
@@ -193,14 +205,12 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   @Override
   public void onStop() {
     super.onStop();
-    if (Util.SDK_INT > 23) {
-      releasePlayer();
-    }
   }
 
   @Override
   public void onDestroy() {
     super.onDestroy();
+    releasePlayer();
     releaseAdsLoader();
   }
 
