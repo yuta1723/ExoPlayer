@@ -16,9 +16,11 @@
 package com.google.android.exoplayer2.demo;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -148,6 +150,8 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
   private boolean isGotoBackground = false;
   private boolean FLAG_START_NOTIFICATION_SERVICE = false;
 
+  private IntentFilter intentFilter;
+
 
   // Activity lifecycle
 
@@ -173,22 +177,34 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
     simpleExoPlayerView.setControllerVisibilityListener(this);
     simpleExoPlayerView.requestFocus();
+
+    intentFilter = new IntentFilter();
+    intentFilter.addAction(NotificationService.ACTION_STOP_PLAYER);
+    intentFilter.addAction(NotificationService.ACTION_TOGGLE_PLAY_PAUSE_INTENT);
   }
 
   @Override
   public void onNewIntent(Intent intent) {
-    releasePlayer();
-    shouldAutoPlay = true;
-    clearResumePosition();
-    setIntent(intent);
+    Log.d(TAG,"onNewIntent");
+
+    simpleExoPlayerView.setPlayer(player);
+    goneNotificationAndStopService();
+    unregisterReceiver(mIntentReceiver);
+
+//    releasePlayer();
+//    shouldAutoPlay = true;
+//    clearResumePosition();
+//    setIntent(intent);
   }
 
   @Override
   public void onStart() {
+    Log.d(TAG,"onStart");
     super.onStart();
     if (isBackgroundEnable && isGotoBackground) {
       simpleExoPlayerView.setPlayer(player);
       goneNotificationAndStopService();
+      unregisterReceiver(mIntentReceiver);
       return;
     } else if (isGotoBackground) {
       shouldAutoPlay = false;
@@ -198,6 +214,7 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
 
   @Override
   public void onResume() {
+    Log.d(TAG,"onResume");
     super.onResume();
     //initialPlayerを実行するタイミングによって動作が異なることはない。
 //    if ((Util.SDK_INT <= 23 || player == null)) {
@@ -207,10 +224,12 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
 
   @Override
   public void onPause() {
+    Log.d(TAG,"onPause");
     super.onPause();
     isGotoBackground = true;
     if (isBackgroundEnable) {
       startNotificationService();
+      registerReceiver(mIntentReceiver, intentFilter);
     } else {
       releasePlayer();
     }
@@ -218,11 +237,13 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
 
   @Override
   public void onStop() {
+    Log.d(TAG,"onStop");
     super.onStop();
   }
 
   @Override
   public void onDestroy() {
+    Log.d(TAG,"onDestroy");
     super.onDestroy();
     releasePlayer();
     releaseAdsLoader();
@@ -731,7 +752,7 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     try {
       mService.send(msg);
     } catch (RemoteException e) {
-      e.printStackTrace();
+      Log.d(TAG,e.getMessage());
     }
     try {
       unbindService(mConnection);
@@ -748,5 +769,52 @@ public class PlayerActivity extends Activity implements OnClickListener, EventLi
     FLAG_START_NOTIFICATION_SERVICE = true;
     bindService(new Intent(PlayerActivity.this, NotificationService.class), mConnection, Context.BIND_AUTO_CREATE);
   }
+
+  private void isCommandIntent(Intent intent) {
+    if (intent == null || player == null) {
+      return;
+    }
+    String action = intent.getAction();
+    switch (action) {
+      case NotificationService.ACTION_TOGGLE_PLAY_PAUSE_INTENT:
+        Message msg = null;
+        if (isPlaying()) {
+          player.setPlayWhenReady(false);
+          msg = Message.obtain(null, NotificationService.MSG_CHANGE_PLAY, 0, 0);
+        } else {
+          player.setPlayWhenReady(true);
+          msg = Message.obtain(null, NotificationService.MSG_CHANGE_PAUSE, 0, 0);
+        }
+        try {
+          mService.send(msg);
+        } catch (RemoteException e) {
+          Log.d(TAG, e.getMessage());
+        }
+        break;
+      case NotificationService.ACTION_STOP_PLAYER:
+        Message stopMessage = Message.obtain(null, NotificationService.MSG_REMOVE_NOTIFICATION, 0, 0);
+        try {
+          mService.send(stopMessage);
+        } catch (RemoteException e) {
+          e.printStackTrace();
+        }
+        Log.d(TAG, "ACTION_STOP_PLAYER");
+        player.setPlayWhenReady(false);
+        player.release();
+        finish();
+        break;
+      default:
+        Log.d(TAG, "invalid action  : " + action);
+    }
+    return ;
+  }
+
+  private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      Log.d(TAG, "onReceive : intent " + intent + " context : " + context);
+      isCommandIntent(intent);
+    }
+  };
 
 }
